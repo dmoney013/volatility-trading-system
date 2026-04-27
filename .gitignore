@@ -12,6 +12,9 @@ env/
 cache/
 results/
 
+# Secrets
+.env
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb

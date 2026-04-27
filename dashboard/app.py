@@ -474,3 +474,88 @@ else:
 
     st.markdown("---")
     st.caption("Select a ticker in the sidebar and click **Run Analysis + Backtest** for detailed analysis.")
+
+    # ── Live Trading Panel ───────────────────────────────────────
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align:center; margin:30px 0 15px 0;">
+        <span style="font-size:1.8em; font-weight:700; color:#ff6b6b;">
+            🔴 Live Trading — Webull
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    from broker.webull_client import get_accounts, activate_token, execute_top_trade
+
+    col_status, col_actions = st.columns([1, 2])
+
+    with col_status:
+        st.markdown("#### Connection Status")
+        try:
+            accts = get_accounts()
+            if accts:
+                st.success(f"✅ Connected — {len(accts)} account(s)")
+                for a in accts:
+                    st.markdown(f"**{a.get('account_type', 'Account')}**: `{a.get('account_id', 'N/A')}`")
+            else:
+                st.warning("⚠️ Not authenticated. Generate a token below.")
+        except Exception as e:
+            st.error(f"Connection error: {e}")
+
+    with col_actions:
+        st.markdown("#### Actions")
+
+        act_col1, act_col2 = st.columns(2)
+        with act_col1:
+            if st.button("🔑 Generate Token", use_container_width=True):
+                with st.spinner("Creating token... Check your Webull app!"):
+                    success = activate_token()
+                    if success:
+                        st.success("Token activated! Refresh page to see status.")
+                        st.rerun()
+                    else:
+                        st.error("Token verification timed out. Try again.")
+
+        with act_col2:
+            live_mode = st.checkbox("Enable LIVE mode", value=False,
+                                     help="⚠️ When enabled, orders will be placed with real money!")
+
+        st.markdown("---")
+
+        trade_btn = st.button(
+            "🚀 Execute Top GARCH Signal" if live_mode else "🧪 Dry Run Top Signal",
+            use_container_width=True,
+            type="primary",
+        )
+
+        if trade_btn:
+            with st.status(
+                "🔴 PLACING LIVE ORDER..." if live_mode else "🧪 Running dry simulation...",
+                expanded=True
+            ) as status:
+                result = execute_top_trade(budget=bt_capital, dry_run=not live_mode)
+                if result.get("success"):
+                    pick = result.get("pick", {})
+                    if live_mode:
+                        status.update(label="✅ Order placed!", state="complete")
+                        st.balloons()
+                    else:
+                        status.update(label="✅ Dry run complete", state="complete")
+
+                    if pick:
+                        st.markdown(f"""
+                        <div class="metric-card signal-buy" style="padding:20px;">
+                            <div style="font-size:1.3em; font-weight:700; color:#00ff88;">
+                                {'🔴 LIVE ORDER' if live_mode else '🧪 DRY RUN'}: {pick['ticker']} ${pick['strike']} Straddle
+                            </div>
+                            <div style="margin-top:10px; color:#ccc;">
+                                {pick['contracts']}x contracts • Expiry: {pick['expiry']}<br>
+                                Call: ${pick['call_price']:.2f} + Put: ${pick['put_price']:.2f} = <b>${pick['total_cost']:.2f}</b><br>
+                                GARCH spread: +{pick['spread']*100:.1f}%
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    status.update(label="❌ No signal or error", state="error")
+                    st.error(f"Reason: {result.get('reason', 'unknown')}")
+
