@@ -475,6 +475,194 @@ else:
     st.markdown("---")
     st.caption("Select a ticker in the sidebar and click **Run Analysis + Backtest** for detailed analysis.")
 
+    # ── Live Position Tracker ─────────────────────────────────────
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align:center; margin:30px 0 15px 0;">
+        <span style="font-size:1.8em; font-weight:700;
+              background: linear-gradient(90deg, #00ff88, #00ccff);
+              -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            📈 Live Position Tracker
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    from broker.position_tracker import fetch_live_positions, get_pnl_history
+
+    refresh_col1, refresh_col2 = st.columns([3, 1])
+    with refresh_col2:
+        refresh_pos = st.button("🔄 Refresh Positions", use_container_width=True)
+
+    if refresh_pos or "pos_data" not in st.session_state:
+        try:
+            pos_data = fetch_live_positions()
+            if pos_data:
+                st.session_state["pos_data"] = pos_data
+        except Exception as e:
+            st.error(f"Failed to fetch positions: {e}")
+
+    pos_data = st.session_state.get("pos_data")
+
+    if pos_data and pos_data.get("straddles"):
+        # ── Portfolio Summary Metrics ──
+        total_pnl = pos_data["total_pnl"]
+        total_pnl_pct = pos_data["total_pnl_pct"]
+        total_cost = pos_data["total_cost"]
+        total_value = pos_data["total_value"]
+        pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4444"
+        pnl_arrow = "▲" if total_pnl >= 0 else "▼"
+
+        st.markdown(f"""
+        <div class="metric-card" style="padding:25px; text-align:center; border-color:{pnl_color}40;">
+            <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
+                <div>
+                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Total P&L</div>
+                    <div style="font-size:2.2em; font-weight:800; color:{pnl_color};">
+                        {pnl_arrow} ${abs(total_pnl):.2f}
+                    </div>
+                    <div style="font-size:1.1em; color:{pnl_color}; font-weight:600;">
+                        {'+' if total_pnl >= 0 else ''}{total_pnl_pct:.2f}%
+                    </div>
+                </div>
+                <div>
+                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Cost Basis</div>
+                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_cost:.2f}</div>
+                </div>
+                <div>
+                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Market Value</div>
+                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_value:.2f}</div>
+                </div>
+                <div>
+                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Positions</div>
+                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">{len(pos_data['straddles'])}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Individual Straddle Cards ──
+        for key, s in pos_data["straddles"].items():
+            s_pnl_color = "#00ff88" if s["total_pnl"] >= 0 else "#ff4444"
+            s_arrow = "▲" if s["total_pnl"] >= 0 else "▼"
+
+            call = s.get("call") or {}
+            put = s.get("put") or {}
+            call_pnl = call.get("unrealized_pnl", 0)
+            put_pnl = put.get("unrealized_pnl", 0)
+            call_color = "#00ff88" if call_pnl >= 0 else "#ff4444"
+            put_color = "#00ff88" if put_pnl >= 0 else "#ff4444"
+
+            st.markdown(f"""
+            <div class="metric-card" style="padding:18px 24px; margin:12px 0; border-color:{s_pnl_color}30;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                    <div>
+                        <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">
+                            {s['symbol']} ${s['strike']:.0f} Straddle
+                        </div>
+                        <div style="color:#888; font-size:0.85em;">Exp: {s['expiry']}</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.75em; color:#888; text-transform:uppercase;">Total P&L</div>
+                        <div style="font-size:1.6em; font-weight:800; color:{s_pnl_color};">
+                            {s_arrow} ${abs(s['total_pnl']):.2f}
+                        </div>
+                        <div style="font-size:0.9em; color:{s_pnl_color}; font-weight:600;">
+                            {'+' if s['pnl_pct'] >= 0 else ''}{s['pnl_pct']:.2f}%
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:20px;">
+                        <div style="text-align:center; min-width:100px;">
+                            <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📞 Call</div>
+                            <div style="color:#e0e0ff; font-weight:600;">
+                                {call.get('quantity', 0)}x @ ${call.get('cost_price', 0):.2f}
+                            </div>
+                            <div style="font-size:0.85em; color:{call_color};">
+                                Now: ${call.get('last_price', 0):.3f} ({'+' if call_pnl >= 0 else ''}${call_pnl:.2f})
+                            </div>
+                        </div>
+                        <div style="text-align:center; min-width:100px;">
+                            <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📉 Put</div>
+                            <div style="color:#e0e0ff; font-weight:600;">
+                                {put.get('quantity', 0)}x @ ${put.get('cost_price', 0):.2f}
+                            </div>
+                            <div style="font-size:0.85em; color:{put_color};">
+                                Now: ${put.get('last_price', 0):.3f} ({'+' if put_pnl >= 0 else ''}${put_pnl:.2f})
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.7em; color:#888; text-transform:uppercase;">Day P&L</div>
+                        <div style="font-size:1em; font-weight:600; color:{'#00ff88' if s['day_pnl'] >= 0 else '#ff4444'};">
+                            {'+' if s['day_pnl'] >= 0 else ''}${s['day_pnl']:.2f}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ── P&L History Chart ──
+        history = get_pnl_history()
+        if len(history) >= 2:
+            import pandas as pd
+            hist_df = pd.DataFrame(history)
+            hist_df["timestamp"] = pd.to_datetime(hist_df["timestamp"])
+            hist_df = hist_df.sort_values("timestamp")
+
+            fig_pnl = go.Figure()
+            fig_pnl.add_trace(go.Scatter(
+                x=hist_df["timestamp"],
+                y=hist_df["total_pnl"],
+                mode="lines+markers",
+                name="P&L ($)",
+                line=dict(color="#00ff88" if hist_df["total_pnl"].iloc[-1] >= 0 else "#ff4444",
+                          width=3),
+                marker=dict(size=6),
+                fill="tozeroy",
+                fillcolor="rgba(0,255,136,0.08)" if hist_df["total_pnl"].iloc[-1] >= 0
+                          else "rgba(255,68,68,0.08)",
+            ))
+            fig_pnl.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
+            fig_pnl.update_layout(
+                title=dict(text="Position P&L Over Time", font=dict(color="#e0e0ff", size=16)),
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
+                yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
+                           title="Unrealized P&L ($)", tickprefix="$"),
+                height=350,
+                margin=dict(l=50, r=20, t=50, b=30),
+                font=dict(color="#ccc"),
+            )
+            st.plotly_chart(fig_pnl, use_container_width=True)
+
+            # P&L % chart
+            fig_pct = go.Figure()
+            fig_pct.add_trace(go.Scatter(
+                x=hist_df["timestamp"],
+                y=hist_df["total_pnl_pct"],
+                mode="lines+markers",
+                name="P&L %",
+                line=dict(color="#00ccff", width=2),
+                marker=dict(size=5),
+            ))
+            fig_pct.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
+            fig_pct.update_layout(
+                title=dict(text="Return (%)", font=dict(color="#e0e0ff", size=14)),
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
+                yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
+                           title="Return %", ticksuffix="%"),
+                height=250,
+                margin=dict(l=50, r=20, t=40, b=30),
+                font=dict(color="#ccc"),
+            )
+            st.plotly_chart(fig_pct, use_container_width=True)
+        else:
+            st.info("📊 P&L chart will appear after the second refresh — keep clicking **Refresh Positions** to build history.")
+    elif pos_data is not None:
+        st.info("No open option positions found. Execute a trade to start tracking.")
+
     # ── Live Trading Panel ───────────────────────────────────────
     st.markdown("---")
     st.markdown("""
@@ -484,6 +672,7 @@ else:
         </span>
     </div>
     """, unsafe_allow_html=True)
+
 
     from broker.webull_client import get_accounts, activate_token, execute_top_trade
 

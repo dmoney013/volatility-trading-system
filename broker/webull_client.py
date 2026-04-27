@@ -101,7 +101,7 @@ def _call_api(method, path, query_params=None, body=None):
 
 def create_token():
     """Request a new 2FA token. You must then verify in the Webull app."""
-    resp = _call_api("POST", "/openapi/account/token/create")
+    resp = _call_api("POST", "/openapi/auth/token/create")
     if resp.status_code == 200:
         data = resp.json()
         token = data.get("token", "")
@@ -118,7 +118,7 @@ def create_token():
 
 def check_token():
     """Check if the current access token is valid."""
-    resp = _call_api("GET", "/openapi/account/token/check")
+    resp = _call_api("POST", "/openapi/auth/token/check")
     if resp.status_code == 200:
         return resp.json()
     return None
@@ -197,7 +197,7 @@ def get_account_balance(account_id):
 
 def get_positions(account_id):
     """Get current positions."""
-    resp = _call_api("GET", f"/openapi/account/positions",
+    resp = _call_api("GET", "/openapi/assets/positions",
                      query_params={"account_id": account_id})
     if resp.status_code == 200:
         return resp.json()
@@ -256,7 +256,7 @@ def place_option_order(account_id, symbol, strike, expiry, option_type,
     log.info(f"Placing {side} {quantity}x {symbol} {strike} {option_type} "
              f"exp {expiry} @ ${limit_price}")
 
-    resp = _call_api("POST", "/openapi/account/orders/option/place", body=body)
+    resp = _call_api("POST", "/openapi/trade/order/place", body=body)
 
     if resp.status_code == 200:
         result = resp.json()
