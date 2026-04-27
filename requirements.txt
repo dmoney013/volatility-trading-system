@@ -10,3 +10,4 @@ seaborn>=0.12
 streamlit>=1.30
 plotly>=5.15
 ta>=0.10
+statsmodels>=0.14
