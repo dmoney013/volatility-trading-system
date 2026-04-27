@@ -413,27 +413,64 @@ if run_btn:
             st.info("No options chain data available for this ticker.")
 
 else:
-    # Landing page
+    # Landing page with scanner
     st.markdown("""
-    <div class="metric-card" style="text-align:center; padding:60px 40px;">
-        <h2 style="margin-bottom:20px;">Welcome to the Volatility Trading System</h2>
-        <p style="color:#aaa; font-size:1.1em;">
-            This system combines <b>GARCH time series modeling</b> with a
-            <b>Transformer neural network</b> to analyze options volatility
-            and backtest a <b>long straddle</b> strategy.
-        </p>
-        <br/>
-        <p style="color:#6C63FF;">Select a ticker and click <b>Run Analysis + Backtest</b> to begin.</p>
-        <br/>
-        <div style="display:flex; justify-content:center; gap:30px; color:#888; flex-wrap:wrap;">
-            <div>📈 GARCH Volatility Forecasting</div>
-            <div>🧠 Transformer Feature Importance</div>
-            <div>💰 Long Straddle Backtesting</div>
-            <div>📊 IV vs RV Trading Signals</div>
-        </div>
-        <br/>
-        <p style="color:#666; font-size:0.85em;">
-            $150 account | Defined risk only (no naked options) | Webull-compatible
-        </p>
+    <div class="metric-card" style="text-align:center; padding:40px;">
+        <h2 style="margin-bottom:10px;">Volatility Trading System</h2>
+        <p style="color:#aaa;">GARCH + Transformer | Long Straddle | $150 Budget | Webull-compatible</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # ═══ TOP 8 SCANNER ══════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("## 🔍 Top 8 Recommendations — Next Trading Day")
+    scan_col1, scan_col2 = st.columns([3, 1])
+    with scan_col2:
+        scan_btn = st.button("🔄 Refresh Scan", use_container_width=True, type="primary")
+
+    if scan_btn or "scan_results" not in st.session_state:
+        if scan_btn or "scan_results" not in st.session_state:
+            with st.status("Scanning 42 tickers for GARCH signals...", expanded=True) as status:
+                st.write("Fetching options chains & running GARCH models...")
+                from signals.scanner import scan_for_opportunities
+                recs = scan_for_opportunities(budget=bt_capital, top_n=8)
+                st.session_state["scan_results"] = recs
+                status.update(label=f"Scan complete — {len(recs)} opportunities found!", state="complete")
+
+    recs = st.session_state.get("scan_results", [])
+    if recs:
+        for i, r in enumerate(recs):
+            spread_pct = r['spread'] * 100
+            signal_color = "#00cc66" if spread_pct > 10 else "#FFD93D" if spread_pct > 5 else "#ff8844"
+            st.markdown(f"""
+            <div class="metric-card" style="padding:15px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                <div style="min-width:50px; text-align:center;">
+                    <span style="font-size:1.5em; font-weight:700; color:{signal_color};">#{i+1}</span>
+                </div>
+                <div style="min-width:80px;">
+                    <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">{r['ticker']}</div>
+                    <div style="color:#888; font-size:0.85em;">${r['spot']:.2f}</div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="color:#aaa;">
+                        <b>${r['strike']} Straddle</b> — {r['expiry']}
+                    </div>
+                    <div style="color:#888; font-size:0.85em;">
+                        {r['contracts']}x @ ${r['call_price']:.2f}C + ${r['put_price']:.2f}P = <b>${r['total_cost']:.2f}</b>
+                    </div>
+                </div>
+                <div style="min-width:140px; text-align:center;">
+                    <div style="font-size:0.8em; color:#888;">GARCH Spread</div>
+                    <div style="font-size:1.2em; font-weight:700; color:{signal_color};">+{spread_pct:.1f}%</div>
+                </div>
+                <div style="min-width:120px; text-align:center;">
+                    <div style="font-size:0.8em; color:#888;">Liquidity</div>
+                    <div style="color:#ccc;">{r['liquidity']:,} vol</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No opportunities found within budget. Click Refresh to scan.")
+
+    st.markdown("---")
+    st.caption("Select a ticker in the sidebar and click **Run Analysis + Backtest** for detailed analysis.")

@@ -1,8 +1,11 @@
 """
 Rigorous Backtester — proper train/validation/test split evaluation.
 
-Uses GARCH trained ONLY on the training set, validated on the validation
-set, and backtested on completely unseen test data.
+Two modes compared:
+  1. HOLD: Standard 10-day hold (no early exit)
+  2. STOP-LOSS: Close at +10% profit or -5% loss, whichever comes first
+
+Uses GARCH trained ONLY on the training set, tested on unseen data.
 """
 import numpy as np
 import pandas as pd
@@ -20,41 +23,50 @@ from backtest.engine import straddle_price, Trade
 # Data Splitter
 # ═══════════════════════════════════════════════════════════════════
 
-def split_data(prices: pd.DataFrame, train_pct=0.60, val_pct=0.20):
+def split_data(prices, train_pct=0.60, val_pct=0.20):
     """Chronologically split price data into train/validation/test sets."""
     n = len(prices)
     train_end = int(n * train_pct)
     val_end = int(n * (train_pct + val_pct))
-
     train = prices.iloc[:train_end].copy()
     val = prices.iloc[train_end:val_end].copy()
     test = prices.iloc[val_end:].copy()
-
-    split_info = {
-        "total_days": n,
+    return train, val, test, {
         "train_days": len(train), "val_days": len(val), "test_days": len(test),
         "train_range": f"{train.index[0].date()} → {train.index[-1].date()}",
         "val_range": f"{val.index[0].date()} → {val.index[-1].date()}",
         "test_range": f"{test.index[0].date()} → {test.index[-1].date()}",
     }
-    return train, val, test, split_info
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Normal Mode — Long Straddle on Test Set
+# Core Backtest — supports both HOLD and STOP-LOSS modes
 # ═══════════════════════════════════════════════════════════════════
 
-def run_normal_backtest(
+def run_backtest(
     test_prices, cond_vol_test, treasury, ticker,
     initial_capital=INITIAL_CAPITAL, holding_period=HOLDING_PERIOD_DAYS,
-    entry_threshold=ENTRY_VOL_THRESHOLD, verbose=True,
+    entry_threshold=ENTRY_VOL_THRESHOLD,
+    use_stop_loss=False, take_profit=0.10, stop_loss=0.05,
+    verbose=True, label="",
 ):
-    """Run the long straddle backtest on the TEST set only."""
+    """
+    Run long straddle backtest on the test set.
+
+    Args:
+        use_stop_loss: If True, check daily for TP/SL exits
+        take_profit: Close when unrealized return >= this (default 10%)
+        stop_loss: Close when unrealized loss >= this (default 5%)
+    """
+    mode = "STOP-LOSS" if use_stop_loss else "HOLD"
     if verbose:
         print(f"\n{'='*60}")
-        print(f"LONG STRADDLE BACKTEST (TEST SET)")
+        if use_stop_loss:
+            print(f"{label}{mode}: TP={take_profit*100:.0f}% / SL={stop_loss*100:.0f}%")
+        else:
+            print(f"{label}{mode}: {holding_period}-day hold (no early exit)")
         print(f"{'='*60}")
-        print(f"Capital: ${initial_capital:.2f} | Hold: {holding_period}d | Thresh: {entry_threshold*100:.1f}%")
+        print(f"Capital: ${initial_capital:.2f} | Thresh: {entry_threshold*100:.1f}%")
 
     close = test_prices["Close"]
     common_idx = cond_vol_test.index.intersection(close.index).sort_values()
@@ -74,25 +86,58 @@ def run_normal_backtest(
             continue
 
         iv = mkt_iv.get(date, gvol)
-        if np.isnan(iv): iv = gvol
+        if np.isnan(iv):
+            iv = gvol
         r = rf.get(date, 0.04)
         equity.append({"date": date, "equity": capital, "in_trade": in_position})
 
         if in_position:
-            if i - entry_idx >= holding_period:
-                trade, net = _close_position(entry_data, spot, date, ticker, gvol)
+            days_held = i - entry_idx
+
+            # Compute current straddle value (intrinsic + time value proxy)
+            T_remaining = max((holding_period - days_held) / TRADING_DAYS, 0.001)
+            call_tv = max(spot - entry_data["strike"], 0)
+            put_tv = max(entry_data["strike"] - spot, 0)
+            # Near expiry → mostly intrinsic; early → add some time value
+            if T_remaining > 0.005:
+                current_val = straddle_price(spot, entry_data["strike"],
+                                             T_remaining, r, iv)
+                current_val = max(current_val, call_tv + put_tv)
+            else:
+                current_val = call_tv + put_tv
+
+            cost_basis = entry_data["entry_price"]
+            unrealized_return = (current_val - cost_basis) / max(cost_basis, 0.01)
+
+            should_exit = False
+
+            if use_stop_loss:
+                # Check take-profit and stop-loss
+                if unrealized_return >= take_profit:
+                    should_exit = True
+                elif unrealized_return <= -stop_loss:
+                    should_exit = True
+
+            # Always exit at max holding period
+            if days_held >= holding_period:
+                should_exit = True
+
+            if should_exit:
+                trade, net = _close_at_value(
+                    entry_data, current_val, spot, date, ticker, gvol)
                 trades.append(trade)
                 capital += net
                 in_position = False
         else:
             spread = gvol - iv
             if spread > entry_threshold and i + holding_period < len(common_idx):
-                entry_data = _open_position(spot, iv, gvol, r, date, capital, holding_period, spread)
+                entry_data = _open_position(
+                    spot, iv, gvol, r, date, capital, holding_period, spread)
                 if entry_data:
                     entry_idx = i
                     in_position = True
 
-    return _build_results(trades, equity, capital, initial_capital, verbose)
+    return _build_results(trades, equity, capital, initial_capital, mode, verbose)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -113,19 +158,19 @@ def _open_position(spot, iv, gvol, r, date, capital, hold, spread):
     T = hold / TRADING_DAYS
     strike = round(spot, 0)
     price = straddle_price(spot, strike, T, r, iv)
-    if price <= 0.01: return None
+    if price <= 0.01:
+        return None
     cost = price * 100
     comm = COMMISSION_PER_CONTRACT * 2
     contracts = int((capital * MAX_POSITION_PCT - comm) / cost)
-    if contracts < 1: return None
+    if contracts < 1:
+        return None
     return {"date": date, "spot": spot, "strike": strike, "entry_price": price,
             "contracts": contracts, "iv": iv, "gvol": gvol,
             "sig": spread / max(iv, 0.01)}
 
-def _close_position(entry_data, spot, date, ticker, gvol):
-    call_val = max(spot - entry_data["strike"], 0)
-    put_val = max(entry_data["strike"] - spot, 0)
-    exit_val = call_val + put_val
+def _close_at_value(entry_data, exit_val, spot, date, ticker, gvol):
+    """Close position at a given straddle value."""
     pnl_ps = exit_val - entry_data["entry_price"]
     pnl_total = pnl_ps * entry_data["contracts"] * 100
     comm = COMMISSION_PER_CONTRACT * 4
@@ -145,15 +190,19 @@ def _close_position(entry_data, spot, date, ticker, gvol):
     return trade, net
 
 
-def _build_results(trades, equity, final_capital, initial_capital, verbose):
+def _build_results(trades, equity, final_capital, initial_capital, mode, verbose):
     equity_df = pd.DataFrame(equity) if equity else pd.DataFrame()
     if not trades:
-        if verbose: print(f"\n⚠ No trades executed.")
-        return {"total_trades": 0, "final_capital": final_capital,
+        if verbose:
+            print(f"\n⚠ No trades executed in {mode} mode.")
+        return {"mode": mode, "total_trades": 0, "final_capital": final_capital,
                 "total_return_pct": (final_capital - initial_capital) / initial_capital * 100,
                 "equity_df": equity_df, "trades_df": pd.DataFrame(),
                 "win_rate": 0, "profit_factor": 0, "max_drawdown_pct": 0,
-                "sharpe_ratio": 0, "avg_daily_return_pct": 0}
+                "sharpe_ratio": 0, "avg_daily_return_pct": 0,
+                "winners": 0, "losers": 0, "best_trade": 0, "worst_trade": 0,
+                "avg_win": 0, "avg_loss": 0, "total_pnl": 0,
+                "initial_capital": initial_capital}
 
     trades_df = pd.DataFrame([{
         "entry_date": t.entry_date, "exit_date": t.exit_date,
@@ -182,7 +231,7 @@ def _build_results(trades, equity, final_capital, initial_capital, verbose):
         sharpe, avg_daily = 0, 0
 
     stats = {
-        "total_trades": len(trades_df),
+        "mode": mode, "total_trades": len(trades_df),
         "winners": len(winners), "losers": len(losers),
         "win_rate": len(winners) / len(trades_df) * 100,
         "total_pnl": trades_df["net_pnl"].sum(),
@@ -200,7 +249,7 @@ def _build_results(trades, equity, final_capital, initial_capital, verbose):
 
     if verbose:
         print(f"\n{'─'*50}")
-        print(f"RESULTS")
+        print(f"{mode} RESULTS")
         print(f"{'─'*50}")
         print(f"  Total trades:     {stats['total_trades']}")
         print(f"  Win rate:         {stats['win_rate']:.1f}%")
@@ -218,19 +267,20 @@ def _build_results(trades, equity, final_capital, initial_capital, verbose):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Full Rigorous Pipeline
+# Full Rigorous Pipeline — HOLD vs STOP-LOSS comparison
 # ═══════════════════════════════════════════════════════════════════
 
 def run_rigorous_evaluation(
     ticker, initial_capital=INITIAL_CAPITAL, holding_period=10,
-    entry_threshold=0.02, verbose=True,
+    entry_threshold=0.02, take_profit=0.10, stop_loss=0.05, verbose=True,
 ):
     """
     Run full rigorous evaluation with 60/20/20 split:
-      1. Split data chronologically
-      2. Train GARCH on training set only
-      3. Validate model quality on validation set
-      4. Backtest on completely unseen test set
+      1. Train GARCH on training set only
+      2. Validate model quality
+      3. Backtest HOLD mode on test set
+      4. Backtest STOP-LOSS mode on test set
+      5. Compare results
     """
     from data.fetcher import fetch_price_data, fetch_treasury_yield
     from models.garch_model import GARCHVolatilityModel
@@ -238,6 +288,7 @@ def run_rigorous_evaluation(
     if verbose:
         print(f"\n{'#'*60}")
         print(f"RIGOROUS EVALUATION: {ticker}")
+        print(f"HOLD vs STOP-LOSS (TP={take_profit*100:.0f}% / SL={stop_loss*100:.0f}%)")
         print(f"{'#'*60}")
 
     prices = fetch_price_data(ticker)
@@ -246,39 +297,81 @@ def run_rigorous_evaluation(
 
     if verbose:
         print(f"\n📊 Data Split:")
-        print(f"   Train: {split_info['train_days']} days ({split_info['train_range']})")
-        print(f"   Valid: {split_info['val_days']} days ({split_info['val_range']})")
-        print(f"   Test:  {split_info['test_days']} days ({split_info['test_range']})")
+        print(f"   Train: {split_info['train_days']}d ({split_info['train_range']})")
+        print(f"   Valid: {split_info['val_days']}d ({split_info['val_range']})")
+        print(f"   Test:  {split_info['test_days']}d ({split_info['test_range']})")
 
-    # Train GARCH on training set only
-    if verbose: print(f"\n🔧 Training GARCH on training set only...")
+    # Train GARCH
+    if verbose:
+        print(f"\n🔧 Training GARCH...")
     garch = GARCHVolatilityModel()
     diag = garch.fit(train_prices, verbose=False)
-    if verbose: print(f"   Model: {diag['model_name']}")
+    if verbose:
+        print(f"   Model: {diag['model_name']}")
 
-    # Full-sample GARCH for conditional vol
     garch_full = GARCHVolatilityModel()
     garch_full.fit(prices, verbose=False)
-    cond_vol_full = garch_full.get_conditional_volatility()
-    cond_vol_test = cond_vol_full.loc[test_prices.index[0]:test_prices.index[-1]]
-    cond_vol_val = cond_vol_full.loc[val_prices.index[0]:val_prices.index[-1]]
+    cond_vol = garch_full.get_conditional_volatility()
+    cond_vol_test = cond_vol.loc[test_prices.index[0]:test_prices.index[-1]]
+    cond_vol_val = cond_vol.loc[val_prices.index[0]:val_prices.index[-1]]
 
     # Validation diagnostics
     if verbose:
-        print(f"\n📈 Validation Set Diagnostics:")
         val_ret = np.log(val_prices["Close"] / val_prices["Close"].shift(1)).dropna()
         val_rv = val_ret.rolling(5).std() * np.sqrt(TRADING_DAYS)
         common = cond_vol_val.index.intersection(val_rv.dropna().index)
         if len(common) > 0:
             corr = np.corrcoef(cond_vol_val.loc[common], val_rv.loc[common])[0, 1]
-            mae = np.abs(cond_vol_val.loc[common] - val_rv.loc[common]).mean()
-            print(f"   GARCH ↔ RV correlation: {corr:.3f}")
-            print(f"   Mean absolute error:    {mae:.4f}")
+            print(f"\n📈 Validation: GARCH ↔ RV corr = {corr:.3f}")
 
-    # Backtest on test set
-    results = run_normal_backtest(test_prices, cond_vol_test, treasury, ticker,
-                                  initial_capital=initial_capital,
-                                  holding_period=holding_period,
-                                  entry_threshold=entry_threshold, verbose=verbose)
+    # Mode 1: HOLD
+    hold_results = run_backtest(
+        test_prices, cond_vol_test, treasury, ticker,
+        initial_capital=initial_capital, holding_period=holding_period,
+        entry_threshold=entry_threshold,
+        use_stop_loss=False, verbose=verbose)
 
-    return {"ticker": ticker, "split_info": split_info, "results": results}
+    # Mode 2: STOP-LOSS
+    sl_results = run_backtest(
+        test_prices, cond_vol_test, treasury, ticker,
+        initial_capital=initial_capital, holding_period=holding_period,
+        entry_threshold=entry_threshold,
+        use_stop_loss=True, take_profit=take_profit, stop_loss=stop_loss,
+        verbose=verbose)
+
+    # Comparison
+    if verbose:
+        print(f"\n{'='*60}")
+        print(f"COMPARISON: {ticker}")
+        print(f"{'='*60}")
+        print(f"{'Metric':<25} {'HOLD':>15} {'STOP-LOSS':>15}")
+        print(f"{'─'*55}")
+        for key, label, fmt in [
+            ("total_return_pct", "Total Return", "{:+.1f}%"),
+            ("final_capital", "Final Capital", "${:.2f}"),
+            ("total_trades", "Trades", "{}"),
+            ("win_rate", "Win Rate", "{:.1f}%"),
+            ("profit_factor", "Profit Factor", "{:.2f}"),
+            ("max_drawdown_pct", "Max Drawdown", "{:.1f}%"),
+            ("sharpe_ratio", "Sharpe Ratio", "{:.2f}"),
+        ]:
+            hv = hold_results.get(key, 0)
+            sv = sl_results.get(key, 0)
+            if key == "profit_factor":
+                hf = f"{hv:.2f}" if hv < 100 else "∞"
+                sf = f"{sv:.2f}" if sv < 100 else "∞"
+                print(f"  {label:<23} {hf:>15} {sf:>15}")
+            elif key == "final_capital":
+                print(f"  {label:<23} ${hv:>13.2f} ${sv:>13.2f}")
+            elif key == "total_trades":
+                print(f"  {label:<23} {int(hv):>15d} {int(sv):>15d}")
+            else:
+                print(f"  {label:<23} {fmt.format(hv):>15} {fmt.format(sv):>15}")
+
+        winner = "STOP-LOSS" if sl_results["total_return_pct"] > hold_results["total_return_pct"] else "HOLD"
+        print(f"\n  🏆 Winner: {winner}")
+
+    return {
+        "ticker": ticker, "split_info": split_info,
+        "hold": hold_results, "stop_loss": sl_results,
+    }
