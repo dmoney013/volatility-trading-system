@@ -16,8 +16,8 @@ else:
 # ─── Tickers ────────────────────────────────────────────────────────
 DEFAULT_TICKERS = ["SPY", "AAPL", "TSLA", "QQQ", "MSFT"]
 # Budget-friendly tickers where ATM straddles fit within $150
-# (stock price ~$5-20 → straddle cost ~$50-150 per contract)
-AFFORDABLE_TICKERS = ["F", "SOFI", "PLTR", "NIO", "RIVN", "HOOD", "SNAP"]
+# Backtested winners marked with ★
+AFFORDABLE_TICKERS = ["HOOD", "MARA", "DKNG", "PLUG", "LCID", "PLTR", "SOFI", "F", "NIO", "RIVN", "SNAP"]
 VIX_TICKER = "^VIX"
 TREASURY_TICKER = "^TNX"  # 10-Year Treasury Yield
 
