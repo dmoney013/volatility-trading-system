@@ -18,7 +18,7 @@ from datetime import datetime
 # Ensure project root is on path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import DEFAULT_TICKERS, DEVICE
+from config import DEFAULT_TICKERS, DEVICE, INITIAL_CAPITAL
 from data.fetcher import fetch_all_data
 from data.feature_engineer import (
     build_features, normalize_features, build_target,
@@ -176,6 +176,7 @@ def main():
 Examples:
   python main.py --ticker AAPL --mode full
   python main.py --ticker SPY --mode garch
+  python main.py --mode scan                 # Scan 42 tickers for straddle opportunities
   python main.py --mode dashboard
         """,
     )
@@ -188,9 +189,9 @@ Examples:
     parser.add_argument(
         "--mode", "-m",
         type=str,
-        choices=["full", "garch", "transformer", "dashboard"],
+        choices=["full", "garch", "transformer", "scan", "dashboard"],
         default="full",
-        help="Run mode: full pipeline, garch only, transformer only, or dashboard",
+        help="Run mode: full pipeline, garch only, transformer only, scan universe, or dashboard",
     )
     parser.add_argument(
         "--no-cache",
@@ -203,6 +204,26 @@ Examples:
     if args.mode == "dashboard":
         print("Launching Streamlit dashboard...")
         os.system(f"streamlit run dashboard/app.py")
+        return
+
+    if args.mode == "scan":
+        # All scanning MUST go through signals/scanner.py — the single
+        # source of truth for universe, pricing, and signal generation.
+        from signals.scanner import scan_for_opportunities
+        print("\n" + "═" * 60)
+        print("  GARCH STRADDLE SCANNER — signals/scanner.py")
+        print("  Compares GARCH forecast RV against actual option IV")
+        print("═" * 60 + "\n")
+        recs = scan_for_opportunities(budget=INITIAL_CAPITAL, top_n=8)
+        if recs:
+            print(f"{'#':<4} {'Ticker':<8} {'Strike':<8} {'Expiry':<12} {'GARCH RV':<10} {'Opt IV':<10} {'Spread':<10} {'Cost':<10} {'Liq':<8}")
+            print("─" * 80)
+            for i, r in enumerate(recs):
+                print(f"{i+1:<4} {r['ticker']:<8} ${r['strike']:<7} {r['expiry']:<12} "
+                      f"{r['garch_rv']:.1%}     {r['mkt_iv']:.1%}     {r['spread']:+.1%}    "
+                      f"${r['total_cost']:<8.2f} {r['liquidity']:>6}")
+        else:
+            print("No opportunities found within budget.")
         return
 
     # Fetch data

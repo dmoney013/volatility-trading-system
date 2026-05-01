@@ -1,6 +1,21 @@
 """
-Live Scanner — Scans a broad universe of tickers for the best
+Live Scanner — THE SINGLE SOURCE OF TRUTH for scanning straddle opportunities.
+
+Scans a broad universe of 42 budget-friendly tickers for the best
 GARCH-signaled straddle opportunities within a given budget.
+
+This module is the canonical scanner used by:
+  - main.py --mode scan        (CLI entry point)
+  - dashboard/app.py           (Streamlit landing page)
+  - broker/webull_client.py    (live trade execution)
+
+Signal methodology:
+  - Compares GARCH forecast RV against ACTUAL OPTION IMPLIED VOLATILITY
+    (not rolling historical vol) to identify when options are underpriced.
+  - Uses real last-traded option prices, not theoretical Black-Scholes.
+  - Tracks liquidity (call+put volume) to avoid illiquid contracts.
+
+DO NOT create alternative scanner scripts. All scanning routes through here.
 """
 import numpy as np
 import pandas as pd
@@ -76,16 +91,12 @@ def scan_for_opportunities(budget=150.0, top_n=8):
                 p_vol = p['volume'] if not pd.isna(p['volume']) else 0
                 avg_iv = (c['impliedVolatility'] + p['impliedVolatility']) / 2
 
-                # GARCH signal
+                # GARCH signal — compare forecast RV against actual option IV
                 garch = GARCHVolatilityModel()
                 garch.fit(prices, verbose=False)
                 cond_vol = garch.get_conditional_volatility()
                 garch_rv = cond_vol.iloc[-1]
-                log_ret = np.log(
-                    prices['Close'] / prices['Close'].shift(1))
-                mkt_iv = log_ret.rolling(21).std().iloc[-1] * np.sqrt(
-                    TRADING_DAYS)
-                spread = garch_rv - mkt_iv
+                spread = garch_rv - avg_iv
 
                 results.append({
                     'ticker': sym,
@@ -98,10 +109,10 @@ def scan_for_opportunities(budget=150.0, top_n=8):
                     'contracts': contracts,
                     'total_cost': round(straddle_cost * contracts + 1.30, 2),
                     'garch_rv': round(garch_rv, 4),
-                    'mkt_iv': round(mkt_iv, 4),
+                    'mkt_iv': round(avg_iv, 4),
                     'spread': round(spread, 4),
                     'signal_strength': round(
-                        spread / max(mkt_iv, 0.01), 3),
+                        spread / max(avg_iv, 0.01), 3),
                     'option_iv': round(avg_iv, 4),
                     'call_volume': int(c_vol),
                     'put_volume': int(p_vol),

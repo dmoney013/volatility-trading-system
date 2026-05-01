@@ -430,8 +430,8 @@ else:
 
     if scan_btn or "scan_results" not in st.session_state:
         if scan_btn or "scan_results" not in st.session_state:
-            with st.status("Scanning 42 tickers for GARCH signals...", expanded=True) as status:
-                st.write("Fetching options chains & running GARCH models...")
+            with st.status("Scanning 42 tickers — GARCH RV vs actual option IV...", expanded=True) as status:
+                st.write("Fetching live options chains & comparing GARCH forecast RV against actual implied volatility...")
                 from signals.scanner import scan_for_opportunities
                 recs = scan_for_opportunities(budget=bt_capital, top_n=8)
                 st.session_state["scan_results"] = recs
@@ -459,8 +459,16 @@ else:
                         {r['contracts']}x @ ${r['call_price']:.2f}C + ${r['put_price']:.2f}P = <b>${r['total_cost']:.2f}</b>
                     </div>
                 </div>
+                <div style="min-width:100px; text-align:center;">
+                    <div style="font-size:0.8em; color:#888;">GARCH RV</div>
+                    <div style="color:#e0e0ff; font-weight:600;">{r['garch_rv']:.1%}</div>
+                </div>
+                <div style="min-width:100px; text-align:center;">
+                    <div style="font-size:0.8em; color:#888;">Option IV</div>
+                    <div style="color:#e0e0ff; font-weight:600;">{r['mkt_iv']:.1%}</div>
+                </div>
                 <div style="min-width:140px; text-align:center;">
-                    <div style="font-size:0.8em; color:#888;">GARCH Spread</div>
+                    <div style="font-size:0.8em; color:#888;">RV-IV Spread</div>
                     <div style="font-size:1.2em; font-weight:700; color:{signal_color};">+{spread_pct:.1f}%</div>
                 </div>
                 <div style="min-width:120px; text-align:center;">
