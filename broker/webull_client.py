@@ -204,6 +204,108 @@ def get_positions(account_id):
     log.error(f"get_positions failed: {resp.status_code} — {resp.text}")
     return None
 
+# ═══════════════════════════════════════════════════════════════════
+# Market Data — Real-time Option Quotes
+# ═══════════════════════════════════════════════════════════════════
+
+def _build_option_symbol(ticker, expiry, option_type, strike):
+    """
+    Build OCC option symbol format: TICKER + YYMMDD + C/P + strike*1000 (8 digits).
+    Example: CHPT 2026-06-18 CALL $9 → CHPT  260618C00009000
+    """
+    # Pad ticker to 6 chars (left-aligned, space-padded)
+    padded = ticker.ljust(6)
+    # Date: YYMMDD
+    dt = datetime.strptime(expiry, "%Y-%m-%d")
+    date_str = dt.strftime("%y%m%d")
+    # Type: C or P
+    cp = "C" if option_type.upper() == "CALL" else "P"
+    # Strike: multiply by 1000, zero-pad to 8 digits
+    strike_int = int(float(strike) * 1000)
+    strike_str = f"{strike_int:08d}"
+    return f"{padded}{date_str}{cp}{strike_str}"
+
+
+def get_option_quote(ticker, expiry, option_type, strike):
+    """
+    Fetch real-time option quote from Webull's market data API.
+
+    Returns dict with bid, ask, last, volume, open_interest or None on failure.
+    """
+    symbol = _build_option_symbol(ticker, expiry, option_type, strike)
+    log.info(f"   [webull] Fetching quote for {symbol.strip()}")
+
+    try:
+        resp = _call_api("GET", "/openapi/market/options/snapshot",
+                        query_params={"symbols": symbol})
+        if resp.status_code == 200:
+            data = resp.json()
+            # Response may be a list or dict depending on API version
+            if isinstance(data, list) and len(data) > 0:
+                q = data[0]
+            elif isinstance(data, dict):
+                # Try common response structures
+                q = data.get("data", data)
+                if isinstance(q, list) and len(q) > 0:
+                    q = q[0]
+            else:
+                log.warning(f"   [webull] Empty response for {symbol.strip()}")
+                return None
+
+            return {
+                'bid': float(q.get('bid', q.get('bidPrice', 0)) or 0),
+                'ask': float(q.get('ask', q.get('askPrice', 0)) or 0),
+                'last': float(q.get('last', q.get('lastPrice', q.get('close', 0))) or 0),
+                'volume': int(q.get('volume', 0) or 0),
+                'open_interest': int(q.get('openInterest', q.get('open_interest', 0)) or 0),
+            }
+        else:
+            log.warning(f"   [webull] Quote failed ({resp.status_code}): {resp.text[:200]}")
+            return None
+    except Exception as e:
+        log.warning(f"   [webull] Quote error for {symbol.strip()}: {e}")
+        return None
+
+
+def get_strangle_quotes(ticker, call_strike, put_strike, expiry):
+    """
+    Fetch real-time bid/ask for both legs of a strangle from Webull.
+
+    Returns dict compatible with fetch_fresh_strangle_quotes format,
+    or None if either leg fails.
+    """
+    call_q = get_option_quote(ticker, expiry, "CALL", call_strike)
+    put_q = get_option_quote(ticker, expiry, "PUT", put_strike)
+
+    if not call_q or not put_q:
+        return None
+
+    # Use ask price for buying (most conservative/realistic fill price)
+    # Fall back to last price if ask is zero
+    c_price = call_q['ask'] if call_q['ask'] > 0 else call_q['last']
+    p_price = put_q['ask'] if put_q['ask'] > 0 else put_q['last']
+
+    return {
+        'call_strike': float(call_strike),
+        'put_strike': float(put_strike),
+        'call_price': round(c_price, 2),
+        'put_price': round(p_price, 2),
+        'call_bid': round(call_q['bid'], 2),
+        'put_bid': round(put_q['bid'], 2),
+        'call_ask': round(call_q['ask'], 2),
+        'put_ask': round(put_q['ask'], 2),
+        'call_volume': call_q['volume'],
+        'put_volume': put_q['volume'],
+        'source': 'webull',
+    }
+
+
+def get_straddle_quotes(ticker, strike, expiry):
+    """
+    Fetch real-time bid/ask for both legs of a straddle from Webull.
+    """
+    return get_strangle_quotes(ticker, strike, strike, expiry)
+
 
 # ═══════════════════════════════════════════════════════════════════
 # Order Placement — Options
@@ -302,6 +404,236 @@ def cancel_order(account_id, client_order_id):
         return resp.json()
     log.error(f"cancel failed: {resp.status_code} — {resp.text}")
     return None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Multi-Leg Combo Orders (atomic fill — both legs or neither)
+# ═══════════════════════════════════════════════════════════════════
+
+def place_combo_strangle(account_id, symbol, call_strike, put_strike,
+                         expiry, side, quantity, call_limit, put_limit):
+    """
+    Place a long strangle as a single atomic combo order.
+
+    The exchange fills both legs simultaneously or rejects the entire order.
+    This prevents partial fills (one leg filled, other not) that create
+    naked directional exposure.
+
+    Validated structure (tested against /order/preview):
+        - Single new_orders entry with combo_type=NORMAL
+        - option_strategy=STRANGLE
+        - Two legs in the legs array
+        - limit_price = net debit (call + put)
+
+    Args:
+        account_id: Webull account ID
+        symbol: Underlying ticker (e.g. "XPEV")
+        call_strike: Call strike price (e.g. "17.00")
+        put_strike: Put strike price (e.g. "15.00")
+        expiry: Expiration "YYYY-MM-DD"
+        side: "BUY" or "SELL"
+        quantity: Number of contracts per leg
+        call_limit: Limit price for the call leg
+        put_limit: Limit price for the put leg
+
+    Returns:
+        dict with success, combo_order_id, response
+    """
+    client_order_id = uuid.uuid4().hex
+
+    # Net debit = call + put
+    net_price = float(call_limit) + float(put_limit)
+
+    body = {
+        "account_id": account_id,
+        "new_orders": [{
+            "client_order_id": client_order_id,
+            "combo_type": "NORMAL",
+            "order_type": "LIMIT",
+            "limit_price": f"{net_price:.2f}",
+            "quantity": str(quantity),
+            "option_strategy": "STRANGLE",
+            "side": side,
+            "time_in_force": "DAY",
+            "entrust_type": "QTY",
+            "instrument_type": "OPTION",
+            "market": "US",
+            "symbol": symbol,
+            "legs": [
+                {
+                    "side": side,
+                    "quantity": str(quantity),
+                    "symbol": symbol,
+                    "strike_price": str(call_strike),
+                    "option_expire_date": expiry,
+                    "instrument_type": "OPTION",
+                    "option_type": "CALL",
+                    "market": "US",
+                },
+                {
+                    "side": side,
+                    "quantity": str(quantity),
+                    "symbol": symbol,
+                    "strike_price": str(put_strike),
+                    "option_expire_date": expiry,
+                    "instrument_type": "OPTION",
+                    "option_type": "PUT",
+                    "market": "US",
+                },
+            ],
+        }],
+    }
+
+    log.info(f"Placing COMBO {side} STRANGLE: {quantity}x {symbol} "
+             f"${call_strike}C/${put_strike}P exp {expiry} "
+             f"(net debit ${net_price:.2f}/share)")
+
+    resp = _call_api("POST", "/openapi/trade/order/place", body=body)
+
+    if resp.status_code == 200:
+        result = resp.json()
+        log.info(f"Combo order placed: {result}")
+        return {
+            "success": True,
+            "combo_order_id": client_order_id,
+            "order_id": client_order_id,
+            "response": result,
+        }
+    else:
+        log.error(f"Combo order failed: {resp.status_code} — {resp.text}")
+        return {"success": False, "error": resp.text, "status": resp.status_code}
+
+
+def place_combo_straddle(account_id, symbol, strike, expiry,
+                         side, quantity, call_limit, put_limit):
+    """
+    Place a long straddle as a single atomic combo order.
+    Same as strangle but with identical strikes, option_strategy=STRADDLE.
+    """
+    client_order_id = uuid.uuid4().hex
+    net_price = float(call_limit) + float(put_limit)
+
+    body = {
+        "account_id": account_id,
+        "new_orders": [{
+            "client_order_id": client_order_id,
+            "combo_type": "NORMAL",
+            "order_type": "LIMIT",
+            "limit_price": f"{net_price:.2f}",
+            "quantity": str(quantity),
+            "option_strategy": "STRADDLE",
+            "side": side,
+            "time_in_force": "DAY",
+            "entrust_type": "QTY",
+            "instrument_type": "OPTION",
+            "market": "US",
+            "symbol": symbol,
+            "legs": [
+                {
+                    "side": side,
+                    "quantity": str(quantity),
+                    "symbol": symbol,
+                    "strike_price": str(strike),
+                    "option_expire_date": expiry,
+                    "instrument_type": "OPTION",
+                    "option_type": "CALL",
+                    "market": "US",
+                },
+                {
+                    "side": side,
+                    "quantity": str(quantity),
+                    "symbol": symbol,
+                    "strike_price": str(strike),
+                    "option_expire_date": expiry,
+                    "instrument_type": "OPTION",
+                    "option_type": "PUT",
+                    "market": "US",
+                },
+            ],
+        }],
+    }
+
+    log.info(f"Placing COMBO {side} STRADDLE: {quantity}x {symbol} "
+             f"${strike} exp {expiry} (net debit ${net_price:.2f}/share)")
+
+    resp = _call_api("POST", "/openapi/trade/order/place", body=body)
+
+    if resp.status_code == 200:
+        result = resp.json()
+        log.info(f"Combo order placed: {result}")
+        return {
+            "success": True,
+            "combo_order_id": client_order_id,
+            "order_id": client_order_id,
+            "response": result,
+        }
+    else:
+        log.error(f"Combo order failed: {resp.status_code} — {resp.text}")
+        return {"success": False, "error": resp.text, "status": resp.status_code}
+
+
+def close_straddle(account_id, straddle_data, check_market_hours=True):
+    """
+    Close a straddle by selling both call and put legs.
+
+    Args:
+        account_id: Webull account ID
+        straddle_data: Dict from position_tracker with 'call', 'put', 'symbol',
+                       'strike', 'expiry' keys. Each leg should have 'last_price'
+                       updated with fresh quotes before calling this.
+        check_market_hours: If True, refuse to sell outside market hours
+                            (prevents Webull OPTION_ONLY_SUPPORT_MARKET_IN_CORE_TIME error)
+    """
+    # Market hours guard — Webull rejects option sells outside 9:30-4:00 ET
+    if check_market_hours:
+        try:
+            import pytz
+            from datetime import datetime as dt
+            et = pytz.timezone("US/Eastern")
+            now = dt.now(et)
+            market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
+            market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+            if now.weekday() >= 5 or now < market_open or now > market_close:
+                log.warning(
+                    f"close_straddle blocked: market is closed "
+                    f"({now.strftime('%A %H:%M ET')}). "
+                    f"Save as pending close and retry at next open."
+                )
+                return {
+                    "call_order": None, "put_order": None, "success": False,
+                    "error": "market_closed",
+                }
+        except ImportError:
+            pass  # If pytz unavailable, proceed anyway
+
+    results = {"call_order": None, "put_order": None, "success": True}
+
+    for leg_name in ("call", "put"):
+        leg = straddle_data.get(leg_name)
+        if not leg or leg.get("quantity", 0) <= 0:
+            continue
+
+        opt_type = "CALL" if leg_name == "call" else "PUT"
+        # Use last_price as limit — callers should update this with fresh
+        # bid prices before calling close_straddle
+        sell_price = f"{leg['last_price']:.2f}"
+
+        result = place_option_order(
+            account_id=account_id,
+            symbol=straddle_data["symbol"],
+            strike=f"{straddle_data['strike']:.2f}",
+            expiry=straddle_data["expiry"],
+            option_type=opt_type,
+            side="SELL",
+            quantity=leg["quantity"],
+            limit_price=sell_price,
+        )
+        results[f"{leg_name}_order"] = result
+        if not result.get("success"):
+            results["success"] = False
+            log.error(f"Failed to close {leg_name} leg: {result}")
+
+    return results
 
 
 # ═══════════════════════════════════════════════════════════════════

@@ -18,7 +18,7 @@ from datetime import datetime
 # Ensure project root is on path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import DEFAULT_TICKERS, DEVICE, INITIAL_CAPITAL
+from config import DEFAULT_TICKERS, DEVICE, INITIAL_CAPITAL, STRANGLE_OTM_WIDTH
 from data.fetcher import fetch_all_data
 from data.feature_engineer import (
     build_features, normalize_features, build_target,
@@ -194,6 +194,13 @@ Examples:
         help="Run mode: full pipeline, garch only, transformer only, scan universe, or dashboard",
     )
     parser.add_argument(
+        "--strategy", "-s",
+        type=str,
+        choices=["straddle", "strangle", "both"],
+        default="straddle",
+        help="Options strategy: straddle (default), strangle, or both",
+    )
+    parser.add_argument(
         "--no-cache",
         action="store_true",
         help="Disable data caching (re-download all data)",
@@ -207,23 +214,39 @@ Examples:
         return
 
     if args.mode == "scan":
-        # All scanning MUST go through signals/scanner.py — the single
-        # source of truth for universe, pricing, and signal generation.
-        from signals.scanner import scan_for_opportunities
-        print("\n" + "═" * 60)
-        print("  GARCH STRADDLE SCANNER — signals/scanner.py")
-        print("  Compares GARCH forecast RV against actual option IV")
-        print("═" * 60 + "\n")
-        recs = scan_for_opportunities(budget=INITIAL_CAPITAL, top_n=8)
-        if recs:
-            print(f"{'#':<4} {'Ticker':<8} {'Strike':<8} {'Expiry':<12} {'GARCH RV':<10} {'Opt IV':<10} {'Spread':<10} {'Cost':<10} {'Liq':<8}")
-            print("─" * 80)
-            for i, r in enumerate(recs):
-                print(f"{i+1:<4} {r['ticker']:<8} ${r['strike']:<7} {r['expiry']:<12} "
-                      f"{r['garch_rv']:.1%}     {r['mkt_iv']:.1%}     {r['spread']:+.1%}    "
-                      f"${r['total_cost']:<8.2f} {r['liquidity']:>6}")
-        else:
-            print("No opportunities found within budget.")
+        if args.strategy in ("straddle", "both"):
+            from signals.scanner import scan_for_opportunities
+            print("\n" + "═" * 60)
+            print("  GARCH STRADDLE SCANNER — signals/scanner.py")
+            print("  Compares GARCH forecast RV against actual option IV")
+            print("═" * 60 + "\n")
+            recs = scan_for_opportunities(budget=INITIAL_CAPITAL, top_n=8)
+            if recs:
+                print(f"{'#':<4} {'Ticker':<8} {'Strike':<8} {'Expiry':<12} {'GARCH RV':<10} {'Opt IV':<10} {'Spread':<10} {'Cost':<10} {'Liq':<8}")
+                print("─" * 80)
+                for i, r in enumerate(recs):
+                    print(f"{i+1:<4} {r['ticker']:<8} ${r['strike']:<7} {r['expiry']:<12} "
+                          f"{r['garch_rv']:.1%}     {r['mkt_iv']:.1%}     {r['spread']:+.1%}    "
+                          f"${r['total_cost']:<8.2f} {r['liquidity']:>6}")
+            else:
+                print("No straddle opportunities found within budget.")
+
+        if args.strategy in ("strangle", "both"):
+            from signals.strangle_scanner import scan_strangle_opportunities
+            print("\n" + "═" * 60)
+            print(f"  GARCH STRANGLE SCANNER — {STRANGLE_OTM_WIDTH*100:.0f}% OTM")
+            print("  Compares GARCH forecast RV against 30d historical vol")
+            print("═" * 60 + "\n")
+            recs = scan_strangle_opportunities(budget=INITIAL_CAPITAL, top_n=8)
+            if recs:
+                print(f"{'#':<4} {'Ticker':<8} {'Call K':<8} {'Put K':<8} {'Expiry':<12} {'GARCH RV':<10} {'Spread':<10} {'Cost':<10} {'Liq':<8}")
+                print("─" * 85)
+                for i, r in enumerate(recs):
+                    print(f"{i+1:<4} {r['ticker']:<8} ${r['call_strike']:<7} ${r['put_strike']:<7} {r['expiry']:<12} "
+                          f"{r['garch_rv']:.1%}     {r['spread']:+.1%}    "
+                          f"${r['total_cost']:<8.2f} {r['liquidity']:>6}")
+            else:
+                print("No strangle opportunities found within budget.")
         return
 
     # Fetch data

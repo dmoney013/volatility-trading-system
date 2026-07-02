@@ -1,0 +1,667 @@
+    INFO: 2026-04-27 23:08:02,592:               log.py:   20: Logging to /Users/devongobay/qt/mdpdf.log
+   DEBUG: 2026-04-27 23:08:02,592:               cli.py:  103: docs/model_documentation.md
+    INFO: 2026-04-27 23:08:02,593:         converter.py:   14: docs/model_documentation.md
+   DEBUG: 2026-04-27 23:08:02,605:      pdf_renderer.py:  470: printSegment: GARCH Volatility Trading System — Technical Documentation
+   DEBUG: 2026-04-27 23:08:02,618:      pdf_renderer.py:  470: printSegment: Version:
+   DEBUG: 2026-04-27 23:08:02,621:      pdf_renderer.py:  470: printSegment:  1.0
+   DEBUG: 2026-04-27 23:08:02,623:      pdf_renderer.py:  470: printSegment: Date:
+   DEBUG: 2026-04-27 23:08:02,624:      pdf_renderer.py:  470: printSegment:  April 27, 2026
+   DEBUG: 2026-04-27 23:08:02,624:      pdf_renderer.py:  470: printSegment: Author:
+   DEBUG: 2026-04-27 23:08:02,625:      pdf_renderer.py:  470: printSegment:  Autonomous Trading Engine
+   DEBUG: 2026-04-27 23:08:02,625:      pdf_renderer.py:  470: printSegment: Table of Contents
+   DEBUG: 2026-04-27 23:08:02,626:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,626:      pdf_renderer.py:  470: printSegment: Executive Summary
+   ERROR: 2026-04-27 23:08:02,626:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:11: #1-executive-summary: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,626:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,627:      pdf_renderer.py:  470: printSegment: System Architecture
+   ERROR: 2026-04-27 23:08:02,627:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:12: #2-system-architecture: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,627:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-04-27 23:08:02,628:      pdf_renderer.py:  470: printSegment: The GARCH Model
+   ERROR: 2026-04-27 23:08:02,628:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:13: #3-the-garch-model: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,628:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-04-27 23:08:02,629:      pdf_renderer.py:  470: printSegment: Data Sources 
+   DEBUG: 2026-04-27 23:08:02,629:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,629:      pdf_renderer.py:  470: printSegment:  Preparation
+   ERROR: 2026-04-27 23:08:02,630:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:14: #4-data-sources--preparation: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,630:      pdf_renderer.py:  470: printSegment:  5 
+   DEBUG: 2026-04-27 23:08:02,630:      pdf_renderer.py:  470: printSegment: Training 
+   DEBUG: 2026-04-27 23:08:02,630:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,631:      pdf_renderer.py:  470: printSegment:  Model Selection
+   ERROR: 2026-04-27 23:08:02,631:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:15: #5-training--model-selection: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,631:      pdf_renderer.py:  470: printSegment:  6 
+   DEBUG: 2026-04-27 23:08:02,632:      pdf_renderer.py:  470: printSegment: Testing 
+   DEBUG: 2026-04-27 23:08:02,632:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,632:      pdf_renderer.py:  470: printSegment:  Validation
+   ERROR: 2026-04-27 23:08:02,633:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:16: #6-testing--validation: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,633:      pdf_renderer.py:  470: printSegment:  7 
+   DEBUG: 2026-04-27 23:08:02,633:      pdf_renderer.py:  470: printSegment: Signal Generation 
+   DEBUG: 2026-04-27 23:08:02,633:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,634:      pdf_renderer.py:  470: printSegment:  Trading Logic
+   ERROR: 2026-04-27 23:08:02,634:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:17: #7-signal-generation--trading-logic: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,634:      pdf_renderer.py:  470: printSegment:  8 
+   DEBUG: 2026-04-27 23:08:02,635:      pdf_renderer.py:  470: printSegment: Live Scanning 
+   DEBUG: 2026-04-27 23:08:02,635:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,636:      pdf_renderer.py:  470: printSegment:  Execution
+   ERROR: 2026-04-27 23:08:02,636:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:18: #8-live-scanning--execution: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,636:      pdf_renderer.py:  470: printSegment:  9 
+   DEBUG: 2026-04-27 23:08:02,636:      pdf_renderer.py:  470: printSegment: Risk Management
+   ERROR: 2026-04-27 23:08:02,637:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:19: #9-risk-management: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,637:      pdf_renderer.py:  470: printSegment:  10 
+   DEBUG: 2026-04-27 23:08:02,637:      pdf_renderer.py:  470: printSegment: Performance Summary
+   ERROR: 2026-04-27 23:08:02,638:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:20: #10-performance-summary: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,638:      pdf_renderer.py:  470: printSegment:  11 
+   DEBUG: 2026-04-27 23:08:02,638:      pdf_renderer.py:  470: printSegment: Appendix: Mathematical Reference
+   ERROR: 2026-04-27 23:08:02,639:      pdf_renderer.py:  217: /Users/devongobay/qt/docs/model_documentation.md:21: #11-appendix-mathematical-reference: No such file or directory
+   DEBUG: 2026-04-27 23:08:02,639:      pdf_renderer.py:  470: printSegment: 1. Executive Summary
+   DEBUG: 2026-04-27 23:08:02,640:      pdf_renderer.py:  470: printSegment: This system uses 
+   DEBUG: 2026-04-27 23:08:02,640:      pdf_renderer.py:  470: printSegment: Generalized Autoregressive Conditional Heteroskedasticity (GARCH)
+   DEBUG: 2026-04-27 23:08:02,643:      pdf_renderer.py:  470: printSegment:  models to forecast
+   DEBUG: 2026-04-27 23:08:02,643:      pdf_renderer.py:  470: printSegment: stock price volatility and identify mispriced options. The core strategy is a 
+   DEBUG: 2026-04-27 23:08:02,644:      pdf_renderer.py:  470: printSegment: long straddle
+   DEBUG: 2026-04-27 23:08:02,650:      pdf_renderer.py:  470: printSegment:  — simultaneously buying an
+   DEBUG: 2026-04-27 23:08:02,660:      pdf_renderer.py:  470: printSegment: at-the-money (ATM) call and put option — on stocks where the GARCH model predicts that future realized volatility
+   DEBUG: 2026-04-27 23:08:02,661:      pdf_renderer.py:  470: printSegment: will exceed the market
+   DEBUG: 2026-04-27 23:08:02,661:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,662:      pdf_renderer.py:  470: printSegment: s current implied volatility.
+   DEBUG: 2026-04-27 23:08:02,662:      pdf_renderer.py:  470: printSegment: Key characteristics:
+   DEBUG: 2026-04-27 23:08:02,663:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,664:      pdf_renderer.py:  470: printSegment: Model:
+   DEBUG: 2026-04-27 23:08:02,667:      pdf_renderer.py:  470: printSegment:  GJR-GARCH(1,1,1) with Student-t innovations
+   DEBUG: 2026-04-27 23:08:02,667:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,668:      pdf_renderer.py:  470: printSegment: Strategy:
+   DEBUG: 2026-04-27 23:08:02,669:      pdf_renderer.py:  470: printSegment:  Long straddle, 10 trading day hold
+   DEBUG: 2026-04-27 23:08:02,669:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,669:      pdf_renderer.py:  470: printSegment: Budget:
+   DEBUG: 2026-04-27 23:08:02,670:      pdf_renderer.py:  470: printSegment:  $150 per trade
+   DEBUG: 2026-04-27 23:08:02,670:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,671:      pdf_renderer.py:  470: printSegment: Universe:
+   DEBUG: 2026-04-27 23:08:02,672:      pdf_renderer.py:  470: printSegment:  42 affordable tickers (stocks priced ~$1–$30)
+   DEBUG: 2026-04-27 23:08:02,672:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,673:      pdf_renderer.py:  470: printSegment: Execution:
+   DEBUG: 2026-04-27 23:08:02,673:      pdf_renderer.py:  470: printSegment:  Webull OpenAPI with automated order placement
+   DEBUG: 2026-04-27 23:08:02,674:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,674:      pdf_renderer.py:  470: printSegment: Risk control:
+   DEBUG: 2026-04-27 23:08:02,675:      pdf_renderer.py:  470: printSegment:  Auto-close at +10% return; 10-day maximum hold
+   DEBUG: 2026-04-27 23:08:02,676:      pdf_renderer.py:  470: printSegment: 2. System Architecture
+   DEBUG: 2026-04-27 23:08:02,677:      pdf_renderer.py:  470: printSegment: ┌──────────────────────────────────────────────────────────┐
+   DEBUG: 2026-04-27 23:08:02,687:      pdf_renderer.py:  470: printSegment: │                    DATA LAYER                            │
+   DEBUG: 2026-04-27 23:08:02,689:      pdf_renderer.py:  470: printSegment: │  Yahoo Finance API → OHLCV, VIX, Treasury, Options      │
+   DEBUG: 2026-04-27 23:08:02,690:      pdf_renderer.py:  470: printSegment: │  Local CSV cache (12-hour freshness)                     │
+   DEBUG: 2026-04-27 23:08:02,690:      pdf_renderer.py:  470: printSegment: └──────────────┬───────────────────────────────────────────┘
+   DEBUG: 2026-04-27 23:08:02,700:      pdf_renderer.py:  470: printSegment:                │
+   DEBUG: 2026-04-27 23:08:02,701:      pdf_renderer.py:  470: printSegment: ┌──────────────▼───────────────────────────────────────────┐
+   DEBUG: 2026-04-27 23:08:02,710:      pdf_renderer.py:  470: printSegment: │                   MODEL LAYER                            │
+   DEBUG: 2026-04-27 23:08:02,711:      pdf_renderer.py:  470: printSegment: │  GARCH(1,1) vs GJR-GARCH(1,1,1)                         │
+   DEBUG: 2026-04-27 23:08:02,712:      pdf_renderer.py:  470: printSegment: │  Automatic AIC-based model selection                     │
+   DEBUG: 2026-04-27 23:08:02,713:      pdf_renderer.py:  470: printSegment: │  Student-t distribution for fat tails                    │
+   DEBUG: 2026-04-27 23:08:02,713:      pdf_renderer.py:  470: printSegment: └──────────────┬───────────────────────────────────────────┘
+   DEBUG: 2026-04-27 23:08:02,715:      pdf_renderer.py:  470: printSegment:                │
+   DEBUG: 2026-04-27 23:08:02,715:      pdf_renderer.py:  470: printSegment: ┌──────────────▼───────────────────────────────────────────┐
+   DEBUG: 2026-04-27 23:08:02,716:      pdf_renderer.py:  470: printSegment: │                  SIGNAL LAYER                            │
+   DEBUG: 2026-04-27 23:08:02,716:      pdf_renderer.py:  470: printSegment: │  GARCH Realized Vol vs Market Implied Vol                │
+   DEBUG: 2026-04-27 23:08:02,717:      pdf_renderer.py:  470: printSegment: │  Spread > threshold → BUY VOL signal                     │
+   DEBUG: 2026-04-27 23:08:02,717:      pdf_renderer.py:  470: printSegment: │  Scanner: 42 tickers × 3 strikes each                   │
+   DEBUG: 2026-04-27 23:08:02,718:      pdf_renderer.py:  470: printSegment: └──────────────┬───────────────────────────────────────────┘
+   DEBUG: 2026-04-27 23:08:02,718:      pdf_renderer.py:  470: printSegment:                │
+   DEBUG: 2026-04-27 23:08:02,718:      pdf_renderer.py:  470: printSegment: ┌──────────────▼───────────────────────────────────────────┐
+   DEBUG: 2026-04-27 23:08:02,719:      pdf_renderer.py:  470: printSegment: │                EXECUTION LAYER                           │
+   DEBUG: 2026-04-27 23:08:02,720:      pdf_renderer.py:  470: printSegment: │  Webull OpenAPI (HMAC-SHA1 signed)                       │
+   DEBUG: 2026-04-27 23:08:02,720:      pdf_renderer.py:  470: printSegment: │  Two atomic SINGLE-leg orders (call + put)               │
+   DEBUG: 2026-04-27 23:08:02,721:      pdf_renderer.py:  470: printSegment: │  Auto-close monitor (30s polling)                        │
+   DEBUG: 2026-04-27 23:08:02,721:      pdf_renderer.py:  470: printSegment: └──────────────────────────────────────────────────────────┘
+   DEBUG: 2026-04-27 23:08:02,722:      pdf_renderer.py:  470: printSegment: Source files:
+   DEBUG: 2026-04-27 23:08:02,722:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,723:      pdf_renderer.py:  470: printSegment: models/garch_model.py
+   DEBUG: 2026-04-27 23:08:02,723:      pdf_renderer.py:  470: printSegment:  — GARCH fitting, forecasting, diagnostics
+   DEBUG: 2026-04-27 23:08:02,724:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,724:      pdf_renderer.py:  470: printSegment: signals/scanner.py
+   DEBUG: 2026-04-27 23:08:02,725:      pdf_renderer.py:  470: printSegment:  — Universe scanning and signal ranking
+   DEBUG: 2026-04-27 23:08:02,725:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,726:      pdf_renderer.py:  470: printSegment: signals/generator.py
+   DEBUG: 2026-04-27 23:08:02,726:      pdf_renderer.py:  470: printSegment:  — IV vs RV spread computation
+   DEBUG: 2026-04-27 23:08:02,726:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,727:      pdf_renderer.py:  470: printSegment: backtest/rigorous.py
+   DEBUG: 2026-04-27 23:08:02,727:      pdf_renderer.py:  470: printSegment:  — Train/val/test evaluation
+   DEBUG: 2026-04-27 23:08:02,728:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,728:      pdf_renderer.py:  470: printSegment: broker/webull_client.py
+   DEBUG: 2026-04-27 23:08:02,729:      pdf_renderer.py:  470: printSegment:  — Order execution
+   DEBUG: 2026-04-27 23:08:02,729:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,730:      pdf_renderer.py:  470: printSegment: broker/auto_close.py
+   DEBUG: 2026-04-27 23:08:02,730:      pdf_renderer.py:  470: printSegment:  — Autonomous position monitoring
+   DEBUG: 2026-04-27 23:08:02,731:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,731:      pdf_renderer.py:  470: printSegment: data/fetcher.py
+   DEBUG: 2026-04-27 23:08:02,732:      pdf_renderer.py:  470: printSegment:  — Market data retrieval
+   DEBUG: 2026-04-27 23:08:02,732:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,733:      pdf_renderer.py:  470: printSegment: config.py
+   DEBUG: 2026-04-27 23:08:02,733:      pdf_renderer.py:  470: printSegment:  — All hyperparameters
+   DEBUG: 2026-04-27 23:08:02,734:      pdf_renderer.py:  470: printSegment: 3. The GARCH Model
+   DEBUG: 2026-04-27 23:08:02,735:      pdf_renderer.py:  470: printSegment: 3.1 What is GARCH?
+   DEBUG: 2026-04-27 23:08:02,736:      pdf_renderer.py:  470: printSegment: GARCH (Generalized Autoregressive Conditional Heteroskedasticity) models the fact that financial markets exhibit 
+   DEBUG: 2026-04-27 23:08:02,736:      pdf_renderer.py:  470: printSegment: volatility clustering
+   DEBUG: 2026-04-27 23:08:02,737:      pdf_renderer.py:  470: printSegment:  — periods of high volatility tend to follow high volatility, and calm periods follow calm periods.
+   DEBUG: 2026-04-27 23:08:02,738:      pdf_renderer.py:  470: printSegment: Unlike simple historical volatility (which treats all past days equally), GARCH models learn how today
+   DEBUG: 2026-04-27 23:08:02,739:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,739:      pdf_renderer.py:  470: printSegment: s volatility
+   DEBUG: 2026-04-27 23:08:02,740:      pdf_renderer.py:  470: printSegment: depends on:
+   DEBUG: 2026-04-27 23:08:02,740:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,740:      pdf_renderer.py:  470: printSegment: Yesterday
+   DEBUG: 2026-04-27 23:08:02,741:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,741:      pdf_renderer.py:  470: printSegment: s volatility
+   DEBUG: 2026-04-27 23:08:02,742:      pdf_renderer.py:  470: printSegment:  (persistence)
+   DEBUG: 2026-04-27 23:08:02,742:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,743:      pdf_renderer.py:  470: printSegment: Yesterday
+   DEBUG: 2026-04-27 23:08:02,743:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,744:      pdf_renderer.py:  470: printSegment: s shock
+   DEBUG: 2026-04-27 23:08:02,744:      pdf_renderer.py:  470: printSegment:  (reaction to new information)
+   DEBUG: 2026-04-27 23:08:02,745:      pdf_renderer.py:  470: printSegment: 3.2 Model Specifications
+   DEBUG: 2026-04-27 23:08:02,745:      pdf_renderer.py:  470: printSegment: Two models are fitted and compared:
+   DEBUG: 2026-04-27 23:08:02,746:      pdf_renderer.py:  470: printSegment: Symmetric GARCH(1,1)
+   DEBUG: 2026-04-27 23:08:02,747:      pdf_renderer.py:  470: printSegment: σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}
+   DEBUG: 2026-04-27 23:08:02,747:      pdf_renderer.py:  470: printSegment: Where:
+   DEBUG: 2026-04-27 23:08:02,748:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,748:      pdf_renderer.py:  470: printSegment: σ²_t
+   DEBUG: 2026-04-27 23:08:02,749:      pdf_renderer.py:  470: printSegment:  = conditional variance at time t
+   DEBUG: 2026-04-27 23:08:02,749:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,750:      pdf_renderer.py:  470: printSegment: ω
+   DEBUG: 2026-04-27 23:08:02,750:      pdf_renderer.py:  470: printSegment:  = long-run variance constant (omega)
+   DEBUG: 2026-04-27 23:08:02,751:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,751:      pdf_renderer.py:  470: printSegment: α
+   DEBUG: 2026-04-27 23:08:02,752:      pdf_renderer.py:  470: printSegment:  = ARCH coefficient — how much yesterday
+   DEBUG: 2026-04-27 23:08:02,752:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,753:      pdf_renderer.py:  470: printSegment: s squared shock affects today
+   DEBUG: 2026-04-27 23:08:02,754:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,754:      pdf_renderer.py:  470: printSegment: s variance
+   DEBUG: 2026-04-27 23:08:02,755:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,755:      pdf_renderer.py:  470: printSegment: β
+   DEBUG: 2026-04-27 23:08:02,756:      pdf_renderer.py:  470: printSegment:  = GARCH coefficient — how much yesterday
+   DEBUG: 2026-04-27 23:08:02,756:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,757:      pdf_renderer.py:  470: printSegment: s variance persists
+   DEBUG: 2026-04-27 23:08:02,757:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,758:      pdf_renderer.py:  470: printSegment: ε_{t-1}
+   DEBUG: 2026-04-27 23:08:02,758:      pdf_renderer.py:  470: printSegment:  = yesterday
+   DEBUG: 2026-04-27 23:08:02,759:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,759:      pdf_renderer.py:  470: printSegment: s return shock (residual)
+   DEBUG: 2026-04-27 23:08:02,760:      pdf_renderer.py:  470: printSegment: Constraint:
+   DEBUG: 2026-04-27 23:08:02,760:      pdf_renderer.py:  470: printSegment:  α + β 
+   DEBUG: 2026-04-27 23:08:02,761:      pdf_renderer.py:  470: printSegment: <
+   DEBUG: 2026-04-27 23:08:02,761:      pdf_renderer.py:  470: printSegment:  1 ensures stationarity (variance doesn
+   DEBUG: 2026-04-27 23:08:02,761:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,762:      pdf_renderer.py:  470: printSegment: t explode).
+   DEBUG: 2026-04-27 23:08:02,762:      pdf_renderer.py:  470: printSegment: Asymmetric GJR-GARCH(1,1,1)
+   DEBUG: 2026-04-27 23:08:02,763:      pdf_renderer.py:  470: printSegment: σ²_t = ω + (α + γ·I_{t-1})·ε²_{t-1} + β·σ²_{t-1}
+   DEBUG: 2026-04-27 23:08:02,763:      pdf_renderer.py:  470: printSegment: Where:
+   DEBUG: 2026-04-27 23:08:02,764:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,764:      pdf_renderer.py:  470: printSegment: γ
+   DEBUG: 2026-04-27 23:08:02,765:      pdf_renderer.py:  470: printSegment:  = leverage parameter — additional variance from negative shocks
+   DEBUG: 2026-04-27 23:08:02,765:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,766:      pdf_renderer.py:  470: printSegment: I_{t-1}
+   DEBUG: 2026-04-27 23:08:02,766:      pdf_renderer.py:  470: printSegment:  = indicator function: 1 if ε
+   DEBUG: 2026-04-27 23:08:02,767:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-04-27 23:08:02,767:      pdf_renderer.py:  470: printSegment: {t-1} 
+   DEBUG: 2026-04-27 23:08:02,767:      pdf_renderer.py:  470: printSegment: <
+   DEBUG: 2026-04-27 23:08:02,768:      pdf_renderer.py:  470: printSegment:  0, else 0
+   DEBUG: 2026-04-27 23:08:02,768:      pdf_renderer.py:  470: printSegment: This captures the 
+   DEBUG: 2026-04-27 23:08:02,769:      pdf_renderer.py:  470: printSegment: leverage effect
+   DEBUG: 2026-04-27 23:08:02,771:      pdf_renderer.py:  470: printSegment: : stock prices tend to become more volatile after negative returns than after positive
+   DEBUG: 2026-04-27 23:08:02,772:      pdf_renderer.py:  470: printSegment: returns of the same magnitude.
+   DEBUG: 2026-04-27 23:08:02,772:      pdf_renderer.py:  470: printSegment: 3.3 Innovation Distribution
+   DEBUG: 2026-04-27 23:08:02,773:      pdf_renderer.py:  470: printSegment: Returns are modeled with a 
+   DEBUG: 2026-04-27 23:08:02,773:      pdf_renderer.py:  470: printSegment: Student-t distribution
+   DEBUG: 2026-04-27 23:08:02,774:      pdf_renderer.py:  470: printSegment:  rather than Gaussian, because financial returns exhibit:
+   DEBUG: 2026-04-27 23:08:02,774:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,775:      pdf_renderer.py:  470: printSegment: Fat tails
+   DEBUG: 2026-04-27 23:08:02,775:      pdf_renderer.py:  470: printSegment:  — extreme moves occur more frequently than a normal distribution predicts
+   DEBUG: 2026-04-27 23:08:02,776:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,776:      pdf_renderer.py:  470: printSegment: Excess kurtosis
+   DEBUG: 2026-04-27 23:08:02,777:      pdf_renderer.py:  470: printSegment:  — the distribution has heavier tails
+   DEBUG: 2026-04-27 23:08:02,777:      pdf_renderer.py:  470: printSegment: The degrees-of-freedom parameter (ν) is estimated from data. Lower ν → fatter tails.
+   DEBUG: 2026-04-27 23:08:02,786:      pdf_renderer.py:  470: printSegment: 3.4 Model Selection
+   DEBUG: 2026-04-27 23:08:02,787:      pdf_renderer.py:  470: printSegment: Both GARCH(1,1) and GJR-GARCH(1,1,1) are fitted, and the model with the 
+   DEBUG: 2026-04-27 23:08:02,788:      pdf_renderer.py:  470: printSegment: lower Akaike Information
+   DEBUG: 2026-04-27 23:08:02,788:      pdf_renderer.py:  470: printSegment: Criterion (AIC)
+   DEBUG: 2026-04-27 23:08:02,789:      pdf_renderer.py:  470: printSegment:  is selected:
+   DEBUG: 2026-04-27 23:08:02,789:      pdf_renderer.py:  470: printSegment: AIC = 2k - 2·ln(L)
+   DEBUG: 2026-04-27 23:08:02,792:      pdf_renderer.py:  470: printSegment: Where k = number of parameters, L = likelihood. AIC penalizes model complexity — GJR-GARCH wins only if the
+   DEBUG: 2026-04-27 23:08:02,792:      pdf_renderer.py:  470: printSegment: leverage term significantly improves fit.
+   DEBUG: 2026-04-27 23:08:02,793:      pdf_renderer.py:  470: printSegment: 3.5 Configuration
+   DEBUG: 2026-04-27 23:08:02,794:      pdf_renderer.py:  470: printSegment: | Parameter | Value | Rationale |
+   DEBUG: 2026-04-27 23:08:02,794:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,795:      pdf_renderer.py:  470: printSegment: |-----------|-------|-----------|
+   DEBUG: 2026-04-27 23:08:02,795:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,796:      pdf_renderer.py:  470: printSegment: | p (GARCH lag) | 1 | Standard; higher orders rarely
+   DEBUG: 2026-04-27 23:08:02,797:      pdf_renderer.py:  470: printSegment: improve fit |
+   DEBUG: 2026-04-27 23:08:02,797:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,798:      pdf_renderer.py:  470: printSegment: | q (ARCH lag) | 1 | Captures immediate shock reaction |
+   DEBUG: 2026-04-27 23:08:02,799:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,800:      pdf_renderer.py:  470: printSegment: | o (Leverage lag) | 1 | One asymmetric term
+   DEBUG: 2026-04-27 23:08:02,800:      pdf_renderer.py:  470: printSegment: for leverage effect |
+   DEBUG: 2026-04-27 23:08:02,801:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,802:      pdf_renderer.py:  470: printSegment: | Distribution | Student-t | Fat tails in equity returns |
+   DEBUG: 2026-04-27 23:08:02,803:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,804:      pdf_renderer.py:  470: printSegment: | Return scaling | ×100 | Numerical stability
+   DEBUG: 2026-04-27 23:08:02,804:      pdf_renderer.py:  470: printSegment: for optimizer |
+   DEBUG: 2026-04-27 23:08:02,805:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,805:      pdf_renderer.py:  470: printSegment: | Trading days | 252 | Standard US market annualization |
+   DEBUG: 2026-04-27 23:08:02,806:      pdf_renderer.py:  470: printSegment: 4. Data Sources 
+   DEBUG: 2026-04-27 23:08:02,807:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,808:      pdf_renderer.py:  470: printSegment:  Preparation
+   DEBUG: 2026-04-27 23:08:02,808:      pdf_renderer.py:  470: printSegment: 4.1 Price Data
+   DEBUG: 2026-04-27 23:08:02,809:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,809:      pdf_renderer.py:  470: printSegment: Source:
+   DEBUG: 2026-04-27 23:08:02,810:      pdf_renderer.py:  470: printSegment:  Yahoo Finance API (via 
+   DEBUG: 2026-04-27 23:08:02,810:      pdf_renderer.py:  470: printSegment: yfinance
+   DEBUG: 2026-04-27 23:08:02,811:      pdf_renderer.py:  470: printSegment:  Python library)
+   DEBUG: 2026-04-27 23:08:02,812:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,812:      pdf_renderer.py:  470: printSegment: Fields:
+   DEBUG: 2026-04-27 23:08:02,813:      pdf_renderer.py:  470: printSegment:  Open, High, Low, Close, Adjusted Close, Volume
+   DEBUG: 2026-04-27 23:08:02,813:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,814:      pdf_renderer.py:  470: printSegment: Frequency:
+   DEBUG: 2026-04-27 23:08:02,815:      pdf_renderer.py:  470: printSegment:  Daily (close-to-close)
+   DEBUG: 2026-04-27 23:08:02,815:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,816:      pdf_renderer.py:  470: printSegment: Date range:
+   DEBUG: 2026-04-27 23:08:02,816:      pdf_renderer.py:  470: printSegment:  January 1, 2022 → present (~1,081 trading days)
+   DEBUG: 2026-04-27 23:08:02,817:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,818:      pdf_renderer.py:  470: printSegment: Caching:
+   DEBUG: 2026-04-27 23:08:02,818:      pdf_renderer.py:  470: printSegment:  CSV files in 
+   DEBUG: 2026-04-27 23:08:02,819:      pdf_renderer.py:  470: printSegment: cache/
+   DEBUG: 2026-04-27 23:08:02,819:      pdf_renderer.py:  470: printSegment:  directory, 12-hour freshness
+   DEBUG: 2026-04-27 23:08:02,820:      pdf_renderer.py:  470: printSegment: 4.2 Returns Computation
+   DEBUG: 2026-04-27 23:08:02,821:      pdf_renderer.py:  470: printSegment: Log returns are used for GARCH fitting:
+   DEBUG: 2026-04-27 23:08:02,821:      pdf_renderer.py:  470: printSegment: r_t = ln(Close_t / Close_{t-1}) × 100
+   DEBUG: 2026-04-27 23:08:02,823:      pdf_renderer.py:  470: printSegment: The ×100 scaling is applied for numerical stability during maximum likelihood estimation. All outputs are de-scaled
+   DEBUG: 2026-04-27 23:08:02,823:      pdf_renderer.py:  470: printSegment: before use.
+   DEBUG: 2026-04-27 23:08:02,823:      pdf_renderer.py:  470: printSegment: 4.3 Supplementary Data
+   DEBUG: 2026-04-27 23:08:02,824:      pdf_renderer.py:  470: printSegment: | Data | Source | Purpose |
+   DEBUG: 2026-04-27 23:08:02,824:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,825:      pdf_renderer.py:  470: printSegment: |------|--------|---------|
+   DEBUG: 2026-04-27 23:08:02,825:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,826:      pdf_renderer.py:  470: printSegment: | VIX (^VIX) | Yahoo Finance | Market fear gauge, regime detection
+   DEBUG: 2026-04-27 23:08:02,826:      pdf_renderer.py:  470: printSegment: |
+   DEBUG: 2026-04-27 23:08:02,826:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,827:      pdf_renderer.py:  470: printSegment: | 10Y Treasury (^TNX) | Yahoo Finance | Risk-free rate for Black-Scholes pricing |
+   DEBUG: 2026-04-27 23:08:02,827:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,829:      pdf_renderer.py:  470: printSegment: | Options chains | Yahoo
+   DEBUG: 2026-04-27 23:08:02,829:      pdf_renderer.py:  470: printSegment: Finance (live) | Current implied volatility, strike prices, premiums |
+   DEBUG: 2026-04-27 23:08:02,830:      pdf_renderer.py:  470: printSegment: 4.4 Ticker Universe
+   DEBUG: 2026-04-27 23:08:02,830:      pdf_renderer.py:  470: printSegment: 42 tickers selected for affordability (stock price $1–$30, enabling ATM straddles within $150):
+   DEBUG: 2026-04-27 23:08:02,831:      pdf_renderer.py:  470: printSegment: F, SOFI, NIO, RIVN, SNAP, MARA, PLUG, LCID, AMC, GME,
+   DEBUG: 2026-04-27 23:08:02,831:      pdf_renderer.py:  470: printSegment: BB, CLOV, OPEN, RIOT, SNDL, GEVO, ACHR, RGTI, QUBT, FCEL,
+   DEBUG: 2026-04-27 23:08:02,832:      pdf_renderer.py:  470: printSegment: CHPT, QS, ENVX, RUN, XPEV, UPST, SKLZ, FUBO, CLSK, HIMS,
+   DEBUG: 2026-04-27 23:08:02,832:      pdf_renderer.py:  470: printSegment: AAL, NCLH, PATH, BLNK, T, INTC, PFE, CCL, PYPL, DKNG,
+   DEBUG: 2026-04-27 23:08:02,833:      pdf_renderer.py:  470: printSegment: HOOD, SIRI
+   DEBUG: 2026-04-27 23:08:02,833:      pdf_renderer.py:  470: printSegment: 5. Training 
+   DEBUG: 2026-04-27 23:08:02,834:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,834:      pdf_renderer.py:  470: printSegment:  Model Selection
+   DEBUG: 2026-04-27 23:08:02,835:      pdf_renderer.py:  470: printSegment: 5.1 Data Splitting
+   DEBUG: 2026-04-27 23:08:02,835:      pdf_renderer.py:  470: printSegment: The system uses a strict 
+   DEBUG: 2026-04-27 23:08:02,835:      pdf_renderer.py:  470: printSegment: chronological 60/20/20 split
+   DEBUG: 2026-04-27 23:08:02,836:      pdf_renderer.py:  470: printSegment:  to prevent look-ahead bias:
+   DEBUG: 2026-04-27 23:08:02,837:      pdf_renderer.py:  470: printSegment: |←── Train (60%) ──→|←── Val (20%) ──→|←── Test (20%) ──→|
+   DEBUG: 2026-04-27 23:08:02,837:      pdf_renderer.py:  470: printSegment:    Jan 2022              Mid 2024           Late 2025
+   DEBUG: 2026-04-27 23:08:02,838:      pdf_renderer.py:  470: printSegment:    ~648 days             ~216 days           ~217 days
+   DEBUG: 2026-04-27 23:08:02,838:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,839:      pdf_renderer.py:  470: printSegment: Training set:
+   DEBUG: 2026-04-27 23:08:02,839:      pdf_renderer.py:  470: printSegment:  Used to estimate GARCH parameters (ω, α, β, γ, ν)
+   DEBUG: 2026-04-27 23:08:02,840:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,840:      pdf_renderer.py:  470: printSegment: Validation set:
+   DEBUG: 2026-04-27 23:08:02,841:      pdf_renderer.py:  470: printSegment:  Used to verify GARCH forecast correlates with realized vol
+   DEBUG: 2026-04-27 23:08:02,841:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,841:      pdf_renderer.py:  470: printSegment: Test set:
+   DEBUG: 2026-04-27 23:08:02,842:      pdf_renderer.py:  470: printSegment:  Completely unseen; used for backtesting trading performance
+   DEBUG: 2026-04-27 23:08:02,843:      pdf_renderer.py:  470: printSegment: 5.2 Fitting Procedure
+   DEBUG: 2026-04-27 23:08:02,843:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,843:      pdf_renderer.py:  470: printSegment: Compute log returns from the training set price data
+   DEBUG: 2026-04-27 23:08:02,844:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,844:      pdf_renderer.py:  470: printSegment: Scale returns by ×100 for numerical stability
+   DEBUG: 2026-04-27 23:08:02,845:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-04-27 23:08:02,845:      pdf_renderer.py:  470: printSegment: Fit GARCH(1,1) via Maximum Likelihood Estimation (MLE)
+   DEBUG: 2026-04-27 23:08:02,846:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-04-27 23:08:02,846:      pdf_renderer.py:  470: printSegment: Fit GJR-GARCH(1,1,1) via MLE
+   DEBUG: 2026-04-27 23:08:02,847:      pdf_renderer.py:  470: printSegment:  5 
+   DEBUG: 2026-04-27 23:08:02,847:      pdf_renderer.py:  470: printSegment: Select the model with lower AIC
+   DEBUG: 2026-04-27 23:08:02,848:      pdf_renderer.py:  470: printSegment:  6 
+   DEBUG: 2026-04-27 23:08:02,848:      pdf_renderer.py:  470: printSegment: Extract conditional volatility series
+   DEBUG: 2026-04-27 23:08:02,849:      pdf_renderer.py:  470: printSegment:  7 
+   DEBUG: 2026-04-27 23:08:02,849:      pdf_renderer.py:  470: printSegment: De-scale and annualize: 
+   DEBUG: 2026-04-27 23:08:02,850:      pdf_renderer.py:  470: printSegment: σ_annual = (σ_daily / 100) × √252
+   DEBUG: 2026-04-27 23:08:02,850:      pdf_renderer.py:  470: printSegment: The 
+   DEBUG: 2026-04-27 23:08:02,851:      pdf_renderer.py:  470: printSegment: arch
+   DEBUG: 2026-04-27 23:08:02,852:      pdf_renderer.py:  470: printSegment:  Python library (by Kevin Sheppard) handles MLE optimization using the SLSQP algorithm with
+   DEBUG: 2026-04-27 23:08:02,853:      pdf_renderer.py:  470: printSegment: automatic parameter bounds.
+   DEBUG: 2026-04-27 23:08:02,853:      pdf_renderer.py:  470: printSegment: 5.3 Diagnostics
+   DEBUG: 2026-04-27 23:08:02,854:      pdf_renderer.py:  470: printSegment: After fitting, the system runs:
+   DEBUG: 2026-04-27 23:08:02,854:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,855:      pdf_renderer.py:  470: printSegment: Ljung-Box test
+   DEBUG: 2026-04-27 23:08:02,856:      pdf_renderer.py:  470: printSegment:  on squared standardized residuals (lags 10, 20) — tests whether GARCH has captured
+   DEBUG: 2026-04-27 23:08:02,856:      pdf_renderer.py:  470: printSegment: all volatility clustering
+   DEBUG: 2026-04-27 23:08:02,857:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,857:      pdf_renderer.py:  470: printSegment: Jarque-Bera test
+   DEBUG: 2026-04-27 23:08:02,858:      pdf_renderer.py:  470: printSegment:  on residuals — tests normality of standardized residuals
+   DEBUG: 2026-04-27 23:08:02,858:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,858:      pdf_renderer.py:  470: printSegment: Parameter significance
+   DEBUG: 2026-04-27 23:08:02,859:      pdf_renderer.py:  470: printSegment:  — p-values for all estimated parameters
+   DEBUG: 2026-04-27 23:08:02,859:      pdf_renderer.py:  470: printSegment: 5.4 Validation Metric
+   DEBUG: 2026-04-27 23:08:02,860:      pdf_renderer.py:  470: printSegment: On the validation set, the system computes the 
+   DEBUG: 2026-04-27 23:08:02,860:      pdf_renderer.py:  470: printSegment: Pearson correlation
+   DEBUG: 2026-04-27 23:08:02,861:      pdf_renderer.py:  470: printSegment:  between:
+   DEBUG: 2026-04-27 23:08:02,861:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,861:      pdf_renderer.py:  470: printSegment: GARCH conditional volatility forecast
+   DEBUG: 2026-04-27 23:08:02,862:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,862:      pdf_renderer.py:  470: printSegment: 5-day rolling realized volatility (from actual returns)
+   DEBUG: 2026-04-27 23:08:02,863:      pdf_renderer.py:  470: printSegment: A correlation > 0.5 indicates the model successfully captures volatility dynamics out-of-sample.
+   DEBUG: 2026-04-27 23:08:02,864:      pdf_renderer.py:  470: printSegment: 6. Testing 
+   DEBUG: 2026-04-27 23:08:02,864:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,864:      pdf_renderer.py:  470: printSegment:  Validation
+   DEBUG: 2026-04-27 23:08:02,865:      pdf_renderer.py:  470: printSegment: 6.1 Backtest Methodology
+   DEBUG: 2026-04-27 23:08:02,865:      pdf_renderer.py:  470: printSegment: The backtest simulates the exact trading strategy on the 
+   DEBUG: 2026-04-27 23:08:02,866:      pdf_renderer.py:  470: printSegment: test set
+   DEBUG: 2026-04-27 23:08:02,866:      pdf_renderer.py:  470: printSegment:  (final 20% of data, never seen during training):
+   DEBUG: 2026-04-27 23:08:02,867:      pdf_renderer.py:  470: printSegment: Entry rules:
+   DEBUG: 2026-04-27 23:08:02,867:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,868:      pdf_renderer.py:  470: printSegment: Compute GARCH conditional vol at time t
+   DEBUG: 2026-04-27 23:08:02,868:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,868:      pdf_renderer.py:  470: printSegment: Compute 21-day rolling market IV from historical returns
+   DEBUG: 2026-04-27 23:08:02,869:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-04-27 23:08:02,869:      pdf_renderer.py:  470: printSegment: Calculate spread = GARCH
+   DEBUG: 2026-04-27 23:08:02,870:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-04-27 23:08:02,870:      pdf_renderer.py:  470: printSegment: vol - Market
+   DEBUG: 2026-04-27 23:08:02,870:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-04-27 23:08:02,871:      pdf_renderer.py:  470: printSegment: IV
+   DEBUG: 2026-04-27 23:08:02,871:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-04-27 23:08:02,872:      pdf_renderer.py:  470: printSegment: If spread > 2% (entry threshold) → open a long straddle
+   DEBUG: 2026-04-27 23:08:02,872:      pdf_renderer.py:  470: printSegment: Position sizing:
+   DEBUG: 2026-04-27 23:08:02,872:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,873:      pdf_renderer.py:  470: printSegment: Strike = round(spot price) — ATM
+   DEBUG: 2026-04-27 23:08:02,873:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,874:      pdf_renderer.py:  470: printSegment: Straddle price computed via Black-Scholes
+   DEBUG: 2026-04-27 23:08:02,874:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,875:      pdf_renderer.py:  470: printSegment: Max contracts = floor((capital × 90% - commissions) / straddle
+   DEBUG: 2026-04-27 23:08:02,875:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-04-27 23:08:02,876:      pdf_renderer.py:  470: printSegment: cost)
+   DEBUG: 2026-04-27 23:08:02,876:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,876:      pdf_renderer.py:  470: printSegment: Commission: $0.65 per contract per leg
+   DEBUG: 2026-04-27 23:08:02,877:      pdf_renderer.py:  470: printSegment: Exit rules:
+   DEBUG: 2026-04-27 23:08:02,877:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,878:      pdf_renderer.py:  470: printSegment: Hold for exactly 10 trading days
+   DEBUG: 2026-04-27 23:08:02,878:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,879:      pdf_renderer.py:  470: printSegment: Exit value = intrinsic value of call + put at exit spot price
+   DEBUG: 2026-04-27 23:08:02,879:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,880:      pdf_renderer.py:  470: printSegment: No early exit, no stop loss (hold strategy outperformed stop-loss in testing)
+   DEBUG: 2026-04-27 23:08:02,880:      pdf_renderer.py:  470: printSegment: 6.2 Performance Metrics
+   DEBUG: 2026-04-27 23:08:02,881:      pdf_renderer.py:  470: printSegment: The backtester computes:
+   DEBUG: 2026-04-27 23:08:02,881:      pdf_renderer.py:  470: printSegment: | Metric | Description |
+   DEBUG: 2026-04-27 23:08:02,882:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,882:      pdf_renderer.py:  470: printSegment: |--------|-------------|
+   DEBUG: 2026-04-27 23:08:02,883:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,883:      pdf_renderer.py:  470: printSegment: | Win Rate | % of trades with positive P
+   DEBUG: 2026-04-27 23:08:02,884:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,884:      pdf_renderer.py:  470: printSegment: L |
+   DEBUG: 2026-04-27 23:08:02,885:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,885:      pdf_renderer.py:  470: printSegment: | Profit Factor | Gross profits
+   DEBUG: 2026-04-27 23:08:02,886:      pdf_renderer.py:  470: printSegment: / Gross losses |
+   DEBUG: 2026-04-27 23:08:02,886:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,887:      pdf_renderer.py:  470: printSegment: | Total Return | (Final capital - Initial) / Initial |
+   DEBUG: 2026-04-27 23:08:02,887:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,888:      pdf_renderer.py:  470: printSegment: | Max Drawdown | Largest peak-to-trough decline |
+   DEBUG: 2026-04-27 23:08:02,888:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,889:      pdf_renderer.py:  470: printSegment: |
+   DEBUG: 2026-04-27 23:08:02,890:      pdf_renderer.py:  470: printSegment: Sharpe Ratio | Risk-adjusted return (annualized) |
+   DEBUG: 2026-04-27 23:08:02,890:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,891:      pdf_renderer.py:  470: printSegment: | Avg Win / Avg Loss | Mean P
+   DEBUG: 2026-04-27 23:08:02,891:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,892:      pdf_renderer.py:  470: printSegment: L of winning vs losing trades |
+   DEBUG: 2026-04-27 23:08:02,892:      pdf_renderer.py:  470: printSegment: 6.3 Stop-Loss Comparison
+   DEBUG: 2026-04-27 23:08:02,893:      pdf_renderer.py:  470: printSegment: Two strategies were compared:
+   DEBUG: 2026-04-27 23:08:02,893:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,894:      pdf_renderer.py:  470: printSegment: Hold strategy:
+   DEBUG: 2026-04-27 23:08:02,894:      pdf_renderer.py:  470: printSegment:  Hold for full 10 days regardless of intraday P
+   DEBUG: 2026-04-27 23:08:02,895:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,895:      pdf_renderer.py:  470: printSegment: L
+   DEBUG: 2026-04-27 23:08:02,896:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,896:      pdf_renderer.py:  470: printSegment: Stop-loss strategy:
+   DEBUG: 2026-04-27 23:08:02,897:      pdf_renderer.py:  470: printSegment:  Close at +10% profit or -5% loss
+   DEBUG: 2026-04-27 23:08:02,903:      pdf_renderer.py:  470: printSegment: The hold strategy consistently outperformed the stop-loss strategy in backtesting, as stop-losses frequently triggered
+   DEBUG: 2026-04-27 23:08:02,904:      pdf_renderer.py:  470: printSegment: during normal intraday volatility before the anticipated move occurred. The hold strategy was therefore selected for
+   DEBUG: 2026-04-27 23:08:02,904:      pdf_renderer.py:  470: printSegment: production.
+   DEBUG: 2026-04-27 23:08:02,905:      pdf_renderer.py:  470: printSegment: Note:
+   DEBUG: 2026-04-27 23:08:02,907:      pdf_renderer.py:  470: printSegment:  For live trading, a +10% take-profit auto-close was added as a practical measure to lock in gains, while no
+   DEBUG: 2026-04-27 23:08:02,907:      pdf_renderer.py:  470: printSegment: stop-loss is enforced on the downside.
+   DEBUG: 2026-04-27 23:08:02,908:      pdf_renderer.py:  470: printSegment: 7. Signal Generation 
+   DEBUG: 2026-04-27 23:08:02,908:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,909:      pdf_renderer.py:  470: printSegment:  Trading Logic
+   DEBUG: 2026-04-27 23:08:02,909:      pdf_renderer.py:  470: printSegment: 7.1 Core Signal: IV-RV Spread
+   DEBUG: 2026-04-27 23:08:02,909:      pdf_renderer.py:  470: printSegment: The fundamental insight is comparing two volatility estimates:
+   DEBUG: 2026-04-27 23:08:02,910:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,910:      pdf_renderer.py:  470: printSegment: GARCH Realized Volatility (RV):
+   DEBUG: 2026-04-27 23:08:02,911:      pdf_renderer.py:  470: printSegment:  What the model predicts actual price movements will be
+   DEBUG: 2026-04-27 23:08:02,911:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,911:      pdf_renderer.py:  470: printSegment: Market Implied Volatility (IV):
+   DEBUG: 2026-04-27 23:08:02,912:      pdf_renderer.py:  470: printSegment:  What the options market is pricing in
+   DEBUG: 2026-04-27 23:08:02,912:      pdf_renderer.py:  470: printSegment: Spread = GARCH_RV - Market_IV
+   DEBUG: 2026-04-27 23:08:02,913:      pdf_renderer.py:  470: printSegment: If Spread > 0: Options are UNDERPRICED → BUY volatility (long
+   DEBUG: 2026-04-27 23:08:02,914:      pdf_renderer.py:  470: printSegment: straddle)
+   DEBUG: 2026-04-27 23:08:02,914:      pdf_renderer.py:  470: printSegment: If Spread < 0: Options are OVERPRICED → SELL volatility
+   DEBUG: 2026-04-27 23:08:02,915:      pdf_renderer.py:  470: printSegment: 7.2 Why Long Straddles?
+   DEBUG: 2026-04-27 23:08:02,915:      pdf_renderer.py:  470: printSegment: A long straddle profits when the underlying stock moves significantly in 
+   DEBUG: 2026-04-27 23:08:02,916:      pdf_renderer.py:  470: printSegment: either direction
+   DEBUG: 2026-04-27 23:08:02,917:      pdf_renderer.py:  470: printSegment: . It loses when the stock
+   DEBUG: 2026-04-27 23:08:02,918:      pdf_renderer.py:  470: printSegment: stays flat (due to time decay / theta).
+   DEBUG: 2026-04-27 23:08:02,918:      pdf_renderer.py:  470: printSegment: Straddle P&L = |Stock Move| - Premium Paid - Theta Decay
+   DEBUG: 2026-04-27 23:08:02,919:      pdf_renderer.py:  470: printSegment: When GARCH predicts higher realized vol than the market expects:
+   DEBUG: 2026-04-27 23:08:02,919:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,920:      pdf_renderer.py:  470: printSegment: The stock is likely to move more than priced in
+   DEBUG: 2026-04-27 23:08:02,920:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,921:      pdf_renderer.py:  470: printSegment: The straddle premium is 
+   DEBUG: 2026-04-27 23:08:02,921:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-04-27 23:08:02,922:      pdf_renderer.py:  470: printSegment: cheap
+   DEBUG: 2026-04-27 23:08:02,922:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-04-27 23:08:02,923:      pdf_renderer.py:  470: printSegment:  relative to expected movement
+   DEBUG: 2026-04-27 23:08:02,923:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,923:      pdf_renderer.py:  470: printSegment: Expected value is positive
+   DEBUG: 2026-04-27 23:08:02,924:      pdf_renderer.py:  470: printSegment: 7.3 Signal Strength
+   DEBUG: 2026-04-27 23:08:02,924:      pdf_renderer.py:  470: printSegment: Signal strength is computed as the 
+   DEBUG: 2026-04-27 23:08:02,925:      pdf_renderer.py:  470: printSegment: relative spread
+   DEBUG: 2026-04-27 23:08:02,925:      pdf_renderer.py:  470: printSegment: :
+   DEBUG: 2026-04-27 23:08:02,926:      pdf_renderer.py:  470: printSegment: Strength = |Spread| / max(Market_IV, 0.01)
+   DEBUG: 2026-04-27 23:08:02,927:      pdf_renderer.py:  470: printSegment: Signals are ranked by spread (strongest positive spread = best buy-vol opportunity).
+   DEBUG: 2026-04-27 23:08:02,928:      pdf_renderer.py:  470: printSegment: 8. Live Scanning 
+   DEBUG: 2026-04-27 23:08:02,928:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,928:      pdf_renderer.py:  470: printSegment:  Execution
+   DEBUG: 2026-04-27 23:08:02,929:      pdf_renderer.py:  470: printSegment: 8.1 Scanner Pipeline
+   DEBUG: 2026-04-27 23:08:02,929:      pdf_renderer.py:  470: printSegment: Every scan cycle:
+   DEBUG: 2026-04-27 23:08:02,930:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-04-27 23:08:02,930:      pdf_renderer.py:  470: printSegment: Iterate through all 42 tickers
+   DEBUG: 2026-04-27 23:08:02,931:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-04-27 23:08:02,931:      pdf_renderer.py:  470: printSegment: For each ticker:
+   DEBUG: 2026-04-27 23:08:02,932:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,932:      pdf_renderer.py:  470: printSegment: a. Fetch current options chain from Yahoo Finance
+   DEBUG: 2026-04-27 23:08:02,933:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,934:      pdf_renderer.py:  470: printSegment: b. Find nearest expiration ~14
+   DEBUG: 2026-04-27 23:08:02,934:      pdf_renderer.py:  470: printSegment: days out
+   DEBUG: 2026-04-27 23:08:02,935:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,935:      pdf_renderer.py:  470: printSegment: c. Try ATM and ±1 strikes
+   DEBUG: 2026-04-27 23:08:02,935:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,936:      pdf_renderer.py:  470: printSegment: d. Compute straddle cost (call + put premium × 100 + $1.30
+   DEBUG: 2026-04-27 23:08:02,936:      pdf_renderer.py:  470: printSegment: commission)
+   DEBUG: 2026-04-27 23:08:02,936:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,937:      pdf_renderer.py:  470: printSegment: e. Filter: must fit within $150 budget
+   DEBUG: 2026-04-27 23:08:02,937:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,937:      pdf_renderer.py:  470: printSegment: f. Fit GARCH model on full price history
+   DEBUG: 2026-04-27 23:08:02,937:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,939:      pdf_renderer.py:  470: printSegment: g.
+   DEBUG: 2026-04-27 23:08:02,939:      pdf_renderer.py:  470: printSegment: Compute spread = GARCH conditional vol - 21-day rolling realized vol
+   DEBUG: 2026-04-27 23:08:02,939:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-04-27 23:08:02,940:      pdf_renderer.py:  470: printSegment: Sort all opportunities by spread (highest first)
+   DEBUG: 2026-04-27 23:08:02,940:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-04-27 23:08:02,940:      pdf_renderer.py:  470: printSegment: Return top 8
+   DEBUG: 2026-04-27 23:08:02,941:      pdf_renderer.py:  470: printSegment: 8.2 Execution via Webull
+   DEBUG: 2026-04-27 23:08:02,941:      pdf_renderer.py:  470: printSegment: Orders are placed through the Webull OpenAPI:
+   DEBUG: 2026-04-27 23:08:02,942:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,942:      pdf_renderer.py:  470: printSegment: Authentication:
+   DEBUG: 2026-04-27 23:08:02,943:      pdf_renderer.py:  470: printSegment:  HMAC-SHA1 signature on every request
+   DEBUG: 2026-04-27 23:08:02,943:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,943:      pdf_renderer.py:  470: printSegment: 2FA:
+   DEBUG: 2026-04-27 23:08:02,944:      pdf_renderer.py:  470: printSegment:  Token-based verification via Webull mobile app
+   DEBUG: 2026-04-27 23:08:02,944:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,945:      pdf_renderer.py:  470: printSegment: Order type:
+   DEBUG: 2026-04-27 23:08:02,945:      pdf_renderer.py:  470: printSegment:  LIMIT orders at last traded price
+   DEBUG: 2026-04-27 23:08:02,945:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,946:      pdf_renderer.py:  470: printSegment: Legs:
+   DEBUG: 2026-04-27 23:08:02,946:      pdf_renderer.py:  470: printSegment:  Two separate SINGLE-leg orders (call + put)
+   DEBUG: 2026-04-27 23:08:02,947:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,947:      pdf_renderer.py:  470: printSegment: Time-in-force:
+   DEBUG: 2026-04-27 23:08:02,948:      pdf_renderer.py:  470: printSegment:  GTC for buys, DAY for sells
+   DEBUG: 2026-04-27 23:08:02,948:      pdf_renderer.py:  470: printSegment: 8.3 Auto-Close Monitor
+   DEBUG: 2026-04-27 23:08:02,949:      pdf_renderer.py:  470: printSegment: A background daemon (
+   DEBUG: 2026-04-27 23:08:02,949:      pdf_renderer.py:  470: printSegment: broker/auto_close.py
+   DEBUG: 2026-04-27 23:08:02,950:      pdf_renderer.py:  470: printSegment: ) runs continuously:
+   DEBUG: 2026-04-27 23:08:02,950:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,950:      pdf_renderer.py:  470: printSegment: Market hours (9:30 AM – 4:00 PM ET):
+   DEBUG: 2026-04-27 23:08:02,963:      pdf_renderer.py:  470: printSegment:  Poll every 30 seconds
+   DEBUG: 2026-04-27 23:08:02,963:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,964:      pdf_renderer.py:  470: printSegment: Off-hours:
+   DEBUG: 2026-04-27 23:08:02,964:      pdf_renderer.py:  470: printSegment:  Poll every 5 minutes
+   DEBUG: 2026-04-27 23:08:02,964:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,965:      pdf_renderer.py:  470: printSegment: Trigger:
+   DEBUG: 2026-04-27 23:08:02,965:      pdf_renderer.py:  470: printSegment:  If any straddle
+   DEBUG: 2026-04-27 23:08:02,966:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-04-27 23:08:02,966:      pdf_renderer.py:  470: printSegment: s total unrealized P
+   DEBUG: 2026-04-27 23:08:02,967:      pdf_renderer.py:  470: printSegment: &
+   DEBUG: 2026-04-27 23:08:02,967:      pdf_renderer.py:  470: printSegment: L ≥ +10%, auto-sell both legs
+   DEBUG: 2026-04-27 23:08:02,974:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,975:      pdf_renderer.py:  470: printSegment: Logging:
+   DEBUG: 2026-04-27 23:08:02,975:      pdf_renderer.py:  470: printSegment:  All checks logged to 
+   DEBUG: 2026-04-27 23:08:02,976:      pdf_renderer.py:  470: printSegment: cache/auto_close.log
+   DEBUG: 2026-04-27 23:08:02,976:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,977:      pdf_renderer.py:  470: printSegment: Trade records:
+   DEBUG: 2026-04-27 23:08:02,977:      pdf_renderer.py:  470: printSegment:  Closed trades saved to 
+   DEBUG: 2026-04-27 23:08:02,978:      pdf_renderer.py:  470: printSegment: cache/closed_trades.json
+   DEBUG: 2026-04-27 23:08:02,978:      pdf_renderer.py:  470: printSegment: 9. Risk Management
+   DEBUG: 2026-04-27 23:08:02,979:      pdf_renderer.py:  470: printSegment: 9.1 Position Sizing
+   DEBUG: 2026-04-27 23:08:02,979:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,980:      pdf_renderer.py:  470: printSegment: Maximum 90% of capital deployed per trade
+   DEBUG: 2026-04-27 23:08:02,980:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,981:      pdf_renderer.py:  470: printSegment: Budget capped at $150 per trade
+   DEBUG: 2026-04-27 23:08:02,981:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,982:      pdf_renderer.py:  470: printSegment: Commission-aware sizing ($0.65/contract/leg)
+   DEBUG: 2026-04-27 23:08:02,983:      pdf_renderer.py:  470: printSegment: 9.2 Diversification
+   DEBUG: 2026-04-27 23:08:02,983:      pdf_renderer.py:  470: printSegment: The scanner ranks 42 tickers but executes only the 
+   DEBUG: 2026-04-27 23:08:02,984:      pdf_renderer.py:  470: printSegment: single best signal
+   DEBUG: 2026-04-27 23:08:02,985:      pdf_renderer.py:  470: printSegment: . This concentrates risk but maximizes edge on
+   DEBUG: 2026-04-27 23:08:02,985:      pdf_renderer.py:  470: printSegment: the highest-conviction opportunity.
+   DEBUG: 2026-04-27 23:08:02,986:      pdf_renderer.py:  470: printSegment: 9.3 Time-Based Risk
+   DEBUG: 2026-04-27 23:08:02,986:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,987:      pdf_renderer.py:  470: printSegment: 10-day maximum holding period limits exposure to prolonged theta decay
+   DEBUG: 2026-04-27 23:08:02,987:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:02,988:      pdf_renderer.py:  470: printSegment: Options selected with ~14-18 days to expiration, avoiding rapid time decay near expiry
+   DEBUG: 2026-04-27 23:08:02,989:      pdf_renderer.py:  470: printSegment: 9.4 Known Risks
+   DEBUG: 2026-04-27 23:08:02,989:      pdf_renderer.py:  470: printSegment: | Risk | Mitigation |
+   DEBUG: 2026-04-27 23:08:02,990:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,990:      pdf_renderer.py:  470: printSegment: |------|------------|
+   DEBUG: 2026-04-27 23:08:02,991:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,991:      pdf_renderer.py:  470: printSegment: | Theta decay | GARCH spread must exceed theta cost |
+   DEBUG: 2026-04-27 23:08:02,992:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,993:      pdf_renderer.py:  470: printSegment: | Liquidity | Scanner
+   DEBUG: 2026-04-27 23:08:02,993:      pdf_renderer.py:  470: printSegment: filters for minimum volume |
+   DEBUG: 2026-04-27 23:08:02,994:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,994:      pdf_renderer.py:  470: printSegment: | Model risk | GJR-GARCH captures asymmetry; Student-t captures fat tails |
+   DEBUG: 2026-04-27 23:08:02,995:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,996:      pdf_renderer.py:  470: printSegment: |
+   DEBUG: 2026-04-27 23:08:02,997:      pdf_renderer.py:  470: printSegment: Execution risk | Limit orders at last price; GTC for fills |
+   DEBUG: 2026-04-27 23:08:02,997:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:02,998:      pdf_renderer.py:  470: printSegment: | Data risk | 12-hour cache freshness; fallback to stored data
+   DEBUG: 2026-04-27 23:08:02,999:      pdf_renderer.py:  470: printSegment: |
+   DEBUG: 2026-04-27 23:08:03,000:      pdf_renderer.py:  470: printSegment: 10. Performance Summary
+   DEBUG: 2026-04-27 23:08:03,000:      pdf_renderer.py:  470: printSegment: 10.1 Model Accuracy
+   DEBUG: 2026-04-27 23:08:03,000:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:03,001:      pdf_renderer.py:  470: printSegment: GARCH conditional volatility correlates 0.5–0.8 with realized volatility on validation sets across
+   DEBUG: 2026-04-27 23:08:03,002:      pdf_renderer.py:  470: printSegment: tickers
+   DEBUG: 2026-04-27 23:08:03,002:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-04-27 23:08:03,003:      pdf_renderer.py:  470: printSegment: GJR-GARCH selected over symmetric GARCH ~70% of the time, confirming leverage effects
+   DEBUG: 2026-04-27 23:08:03,003:      pdf_renderer.py:  470: printSegment: 10.2 Strategy Design Decisions
+   DEBUG: 2026-04-27 23:08:03,004:      pdf_renderer.py:  470: printSegment: | Decision | Chosen | Rejected | Reason |
+   DEBUG: 2026-04-27 23:08:03,004:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,004:      pdf_renderer.py:  470: printSegment: |----------|--------|----------|--------|
+   DEBUG: 2026-04-27 23:08:03,005:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,006:      pdf_renderer.py:  470: printSegment: | Holding period | 10 days | 5 days, weekly
+   DEBUG: 2026-04-27 23:08:03,006:      pdf_renderer.py:  470: printSegment: | Better capture of vol events |
+   DEBUG: 2026-04-27 23:08:03,007:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,007:      pdf_renderer.py:  470: printSegment: | Exit strategy | Hold to expiry | Stop-loss (10%/5%) | Stop-loss underperformed |
+   DEBUG: 2026-04-27 23:08:03,007:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,009:      pdf_renderer.py:  470: printSegment: |
+   DEBUG: 2026-04-27 23:08:03,009:      pdf_renderer.py:  470: printSegment: Model | GARCH-only | GARCH + Transformer | GARCH-only more robust |
+   DEBUG: 2026-04-27 23:08:03,009:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,011:      pdf_renderer.py:  470: printSegment: | Order type | Two single legs |
+   DEBUG: 2026-04-27 23:08:03,011:      pdf_renderer.py:  470: printSegment: Multi-leg combo | Webull API compatibility |
+   DEBUG: 2026-04-27 23:08:03,012:      pdf_renderer.py:  470: printSegment: 11. Appendix: Mathematical Reference
+   DEBUG: 2026-04-27 23:08:03,012:      pdf_renderer.py:  470: printSegment: A. Log Returns
+   DEBUG: 2026-04-27 23:08:03,013:      pdf_renderer.py:  470: printSegment: r_t = ln(P_t / P_{t-1})
+   DEBUG: 2026-04-27 23:08:03,013:      pdf_renderer.py:  470: printSegment: B. GARCH(1,1) Variance Equation
+   DEBUG: 2026-04-27 23:08:03,014:      pdf_renderer.py:  470: printSegment: σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}
+   DEBUG: 2026-04-27 23:08:03,014:      pdf_renderer.py:  470: printSegment: C. GJR-GARCH(1,1,1) Variance Equation
+   DEBUG: 2026-04-27 23:08:03,015:      pdf_renderer.py:  470: printSegment: σ²_t = ω + (α + γ·I_{t-1})·ε²_{t-1} + β·σ²_{t-1}
+   DEBUG: 2026-04-27 23:08:03,015:      pdf_renderer.py:  470: printSegment: I_{t-1} = 1 if ε_{t-1} < 0, else 0
+   DEBUG: 2026-04-27 23:08:03,016:      pdf_renderer.py:  470: printSegment: D. Annualization
+   DEBUG: 2026-04-27 23:08:03,016:      pdf_renderer.py:  470: printSegment: σ_annual = σ_daily × √252
+   DEBUG: 2026-04-27 23:08:03,017:      pdf_renderer.py:  470: printSegment: E. Black-Scholes Straddle Price
+   DEBUG: 2026-04-27 23:08:03,017:      pdf_renderer.py:  470: printSegment: Straddle = Call(S, K, T, r, σ) + Put(S, K, T, r, σ)
+   DEBUG: 2026-04-27 23:08:03,018:      pdf_renderer.py:  470: printSegment: F. Student-t Log-Likelihood
+   DEBUG: 2026-04-27 23:08:03,018:      pdf_renderer.py:  470: printSegment: ℓ(ν, σ²) = Σ [ln Γ((ν+1)/2) - ln Γ(ν/2) - ½ln(π(ν-2)σ²_t) 
+   DEBUG: 2026-04-27 23:08:03,019:      pdf_renderer.py:  470: printSegment:             - ((ν+1)/2)·ln(1 + ε²_t/((ν-2)σ²_t))]
+   DEBUG: 2026-04-27 23:08:03,019:      pdf_renderer.py:  470: printSegment: G. AIC Model Selection
+   DEBUG: 2026-04-27 23:08:03,020:      pdf_renderer.py:  470: printSegment: AIC = 2k - 2·ln(L̂)
+   DEBUG: 2026-04-27 23:08:03,020:      pdf_renderer.py:  470: printSegment: Lower AIC = better model (balances fit vs complexity).
+   DEBUG: 2026-04-27 23:08:03,022:      pdf_renderer.py:  470: printSegment: Document generated from source code analysis of the volatility trading system.
+   DEBUG: 2026-04-27 23:08:03,023:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-04-27 23:08:03,025:      pdf_renderer.py:  470: printSegment: All model parameters and logic
+   DEBUG: 2026-04-27 23:08:03,025:      pdf_renderer.py:  470: printSegment: correspond to the production codebase as of April 27, 2026.
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 0, [1, 'GARCH Volatility Trading System — Technical Documentation', 1, 68.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 1, [2, 'Table of Contents', 1, 160.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 2, [2, '1. Executive Summary', 1, 349.6]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 3, [2, '2. System Architecture', 1, 551.2]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 4, [2, '3. The GARCH Model', 2, 398.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 5, [3, '3.1 What is GARCH?', 2, 432.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 6, [3, '3.2 Model Specifications', 2, 556.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 7, [4, 'Symmetric GARCH(1,1)', 2, 603.1999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 8, [4, 'Asymmetric GJR-GARCH(1,1,1)', 3, 122.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 9, [3, '3.3 Innovation Distribution', 3, 254.39999999999998]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 10, [3, '3.4 Model Selection', 3, 355.19999999999993]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 11, [3, '3.5 Configuration', 3, 467.9999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 12, [2, '4. Data Sources ', 3, 563.1999999999998]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 13, [3, '4.1 Price Data', 3, 596.3999999999997]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 14, [3, '4.2 Returns Computation', 3, 697.1999999999997]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 15, [3, '4.3 Supplementary Data', 4, 158.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 16, [3, '4.4 Ticker Universe', 4, 229.20000000000002]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 17, [2, '5. Training ', 4, 360.40000000000003]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 18, [3, '5.1 Data Splitting', 4, 393.6]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 19, [3, '5.2 Fitting Procedure', 4, 536.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 20, [3, '5.3 Diagnostics', 4, 691.1999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 21, [3, '5.4 Validation Metric', 5, 158.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 22, [2, '6. Testing ', 5, 271.6]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 23, [3, '6.1 Backtest Methodology', 5, 304.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 24, [3, '6.2 Performance Metrics', 5, 573.6]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 25, [3, '6.3 Stop-Loss Comparison', 5, 662.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 26, [2, '7. Signal Generation ', 6, 188.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 27, [3, '7.1 Core Signal: IV-RV Spread', 6, 222.00000000000003]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 28, [3, '7.2 Why Long Straddles?', 6, 364.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 29, [3, '7.3 Signal Strength', 6, 513.6]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 30, [2, '8. Live Scanning ', 6, 614.8]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 31, [3, '8.1 Scanner Pipeline', 6, 647.9999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 32, [3, '8.2 Execution via Webull', 7, 152.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 33, [3, '8.3 Auto-Close Monitor', 7, 271.2]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 34, [2, '9. Risk Management', 7, 402.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 35, [3, '9.1 Position Sizing', 7, 435.59999999999997]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 36, [3, '9.2 Diversification', 7, 512.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 37, [3, '9.3 Time-Based Risk', 7, 571.1999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 38, [3, '9.4 Known Risks', 7, 635.9999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 39, [2, '10. Performance Summary', 8, 70.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 40, [3, '10.1 Model Accuracy', 8, 103.19999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 41, [3, '10.2 Strategy Design Decisions', 8, 180.0]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 42, [2, '11. Appendix: Mathematical Reference', 8, 275.2]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 43, [3, 'A. Log Returns', 8, 308.4]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 44, [3, 'B. GARCH(1,1) Variance Equation', 8, 361.19999999999993]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 45, [3, 'C. GJR-GARCH(1,1,1) Variance Equation', 8, 413.9999999999999]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 46, [3, 'D. Annualization', 8, 478.79999999999984]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 47, [3, 'E. Black-Scholes Straddle Price', 8, 531.5999999999998]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 48, [3, 'F. Student-t Log-Likelihood', 8, 584.3999999999997]
+   DEBUG: 2026-04-27 23:08:03,026:      pdf_renderer.py:   53: 49, [3, 'G. AIC Model Selection', 8, 649.1999999999997]

@@ -17,6 +17,7 @@ from plotly.subplots import make_subplots
 from config import (
     DEFAULT_TICKERS, AFFORDABLE_TICKERS, DEVICE, FEATURE_NAMES,
     INITIAL_CAPITAL, HOLDING_PERIOD_DAYS, ENTRY_VOL_THRESHOLD,
+    STRANGLE_OTM_WIDTH, STRANGLE_HOLDING_PERIOD_DAYS, STRANGLE_ENTRY_VOL_THRESHOLD,
 )
 from data.fetcher import fetch_all_data
 from data.feature_engineer import build_features, normalize_features, build_target
@@ -24,6 +25,7 @@ from models.garch_model import GARCHVolatilityModel
 from models.transformer_model import TransformerTrainer
 from signals.generator import generate_signals, compute_iv_from_options
 from backtest.engine import LongStraddleBacktester
+from backtest.strangle_engine import LongStrangleBacktester
 
 # ─── Page Config ─────────────────────────────────────────────────
 st.set_page_config(
@@ -60,12 +62,13 @@ h1, h2, h3 { color: #e0e0ff !important; }
 # ─── Sidebar ─────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("# 📊 Vol Trading System")
-    st.markdown("*GARCH + Transformer + Backtest*")
+    st.markdown("*GARCH (Decision) + Transformer (Interpretability)*")
     st.markdown("---")
 
     all_tickers = DEFAULT_TICKERS + AFFORDABLE_TICKERS
     ticker = st.selectbox("Select Ticker", all_tickers + ["Custom..."],
-                          help="Budget-friendly tickers (F, SOFI, etc.) work best for $150 straddles")
+                          help="Quick-select from featured tickers, or enter any symbol. "
+                               "Full 42-ticker universe is scanned on the landing page.")
     if ticker == "Custom...":
         ticker = st.text_input("Enter ticker symbol", "F").upper()
 
@@ -81,8 +84,10 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"**Device:** `{DEVICE}`")
     st.markdown("**Data:** 2022 → Present")
+    st.markdown(f"**Hold:** {HOLDING_PERIOD_DAYS} trading days")
+    st.markdown(f"**Entry:** GARCH RV > 30d HV by {ENTRY_VOL_THRESHOLD*100:.0f}%+")
     st.markdown("**Strategy:** Long Straddle")
-    st.caption("No naked options — defined risk only")
+    st.caption("GARCH drives decisions · Transformer provides feature insight")
 
 # ─── Main Content ────────────────────────────────────────────────
 st.markdown(f"# Volatility Analysis: **{ticker}**")
@@ -127,7 +132,19 @@ if run_btn:
         )
         bt_results = bt.run(data["prices"], cond_vol, data["treasury"], ticker, verbose=False)
         st.write(f"✅ {bt_results['total_trades']} trades executed")
-        status.update(label="Backtest complete!", state="complete")
+        status.update(label="Straddle backtest complete!", state="complete")
+
+    # ═══ STRANGLE BACKTEST ═══════════════════════════════════════
+    with st.status("Running Long Strangle Backtest...", expanded=True) as status:
+        st_bt = LongStrangleBacktester(
+            initial_capital=bt_capital,
+            holding_period=STRANGLE_HOLDING_PERIOD_DAYS,
+            entry_threshold=STRANGLE_ENTRY_VOL_THRESHOLD,
+            otm_width=STRANGLE_OTM_WIDTH,
+        )
+        st_bt_results = st_bt.run(data["prices"], cond_vol, data["treasury"], ticker, verbose=False)
+        st.write(f"✅ {st_bt_results['total_trades']} strangle trades executed")
+        status.update(label="Strangle backtest complete!", state="complete")
 
     # ═══ SIGNALS ═════════════════════════════════════════════════
     garch_fv = forecast["Annualized Vol"].iloc[0]
@@ -161,9 +178,10 @@ if run_btn:
     st.markdown("---")
 
     # ═══ TAB LAYOUT ══════════════════════════════════════════════
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "💰 Backtest Results", "📈 Volatility", "🧠 Feature Importance",
-        "📊 GARCH Diagnostics", "📋 Options Chain"
+    tab1, tab7, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "💰 Straddle Backtest", "🔀 Strangle Backtest",
+        "📈 Volatility", "🧠 Feature Importance",
+        "📊 GARCH Diagnostics", "📋 Options Chain", "📖 Model & Methodology"
     ])
 
     # ─── Tab 1: BACKTEST RESULTS (NEW — PRIMARY TAB) ─────────────
@@ -275,18 +293,141 @@ if run_btn:
             st.dataframe(bt.get_trades_df(), use_container_width=True, hide_index=True)
 
             # Strategy explanation
-            st.markdown("""
+            st.markdown(f"""
             <div class="metric-card" style="padding:20px;">
                 <h3 style="margin-top:0;">📖 Strategy: GARCH-Informed Long Straddle</h3>
-                <p><b>Entry:</b> Buy ATM call + ATM put when GARCH forecasts realized vol will exceed
-                the market's current implied volatility (options are underpriced).</p>
-                <p><b>Exit:</b> Hold for the specified period, then close at intrinsic value.</p>
-                <p><b>Risk:</b> Maximum loss = premium paid. No naked options — fully defined risk.</p>
-                <p><b>Edge:</b> GARCH identifies when the market underestimates future volatility.
-                The Transformer identifies which conditions are driving volatility.</p>
-                <p style="color:#888; font-size:0.85em;">⚠️ Option prices are synthesized via Black-Scholes
-                using GARCH conditional volatility. Historical options data is not freely available.
-                Actual results may differ due to bid-ask spreads, liquidity, and early exercise.</p>
+                <p><b>Signal (GARCH):</b> GJR-GARCH(1,1,1) with Student-t innovations forecasts
+                realized volatility. When GARCH RV exceeds the 30-day rolling historical vol by ≥{ENTRY_VOL_THRESHOLD*100:.0f}%,
+                a BUY VOL signal is generated.</p>
+                <p><b>Entry:</b> Buy ATM call + ATM put. The scanner compares GARCH forecast RV against
+                <em>30-day rolling close-to-close historical volatility</em> (backtested to +1,247% vs +736% for IV proxy).</p>
+                <p><b>Exit:</b> Default hold of {HOLDING_PERIOD_DAYS} trading days, then close at intrinsic value.
+                In live trading, an auto-close daemon monitors for +12% take-profit or -30% stop-loss
+                and exits automatically if either threshold is hit.</p>
+                <p><b>Risk:</b> Maximum loss = premium paid. No naked options — fully defined risk.
+                Budget capped at ${INITIAL_CAPITAL:.0f} per trade.</p>
+                <p><b>Interpretability (Transformer):</b> A Transformer encoder is trained alongside GARCH
+                to identify which market features (RSI, VIX, volume, etc.) are driving volatility.
+                It does <em>not</em> influence the buy/sell decision — GARCH is the sole decision-maker.
+                Feature importance from attention weights and gradient saliency is displayed in the
+                "Feature Importance" tab.</p>
+                <p style="color:#888; font-size:0.85em;">⚠️ Backtest uses Black-Scholes synthetic pricing
+                (historical options data is not freely available). Live trading uses real market prices
+                from the options chain. Actual results may differ due to bid-ask spreads and liquidity.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ─── Tab 7: STRANGLE BACKTEST ─────────────────────────────────
+    with tab7:
+        if st_bt_results["total_trades"] == 0:
+            st.warning("No strangle trades were executed. The entry threshold may be too strict for this ticker, or "
+                       "the strangle premiums exceeded the budget.")
+            st.markdown(f"""
+            **Why no trades?** The strangle strategy requires:
+            - GARCH RV to exceed 30d historical vol by ≥{STRANGLE_ENTRY_VOL_THRESHOLD*100:.0f}%
+            - An affordable OTM call + OTM put ({STRANGLE_OTM_WIDTH*100:.0f}% OTM) within the ${bt_capital:.0f} budget
+
+            Try a higher-beta ticker or adjusting the entry threshold.
+            """)
+        else:
+            st_trades_df = st_bt_results.get("trades_df", pd.DataFrame())
+            st_equity_df = st_bt_results.get("equity_df", pd.DataFrame())
+
+            # Summary cards
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st_pnl_color = "#00ff88" if st_bt_results['total_pnl'] >= 0 else "#ff4444"
+                st.markdown(f"""
+                <div class="metric-card" style="text-align:center; padding:20px; border-color:{st_pnl_color}40;">
+                    <div style="color:#888; font-size:0.75em; text-transform:uppercase;">Total P&L</div>
+                    <div style="font-size:2em; font-weight:800; color:{st_pnl_color};">${st_bt_results['total_pnl']:+.2f}</div>
+                    <div style="color:{st_pnl_color}; font-weight:600;">{st_bt_results['total_return_pct']:+.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m2:
+                st.markdown(f"""
+                <div class="metric-card" style="text-align:center; padding:20px;">
+                    <div style="color:#888; font-size:0.75em; text-transform:uppercase;">Win Rate</div>
+                    <div style="font-size:2em; font-weight:800; color:#e0e0ff;">{st_bt_results['win_rate']:.0f}%</div>
+                    <div style="color:#888;">{st_bt_results['winners']}W / {st_bt_results['losers']}L</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m3:
+                st_pf = st_bt_results.get('profit_factor', 0)
+                st_pf_str = f"{st_pf:.2f}" if st_pf < 100 else "∞"
+                st.markdown(f"""
+                <div class="metric-card" style="text-align:center; padding:20px;">
+                    <div style="color:#888; font-size:0.75em; text-transform:uppercase;">Profit Factor</div>
+                    <div style="font-size:2em; font-weight:800; color:#e0e0ff;">{st_pf_str}</div>
+                    <div style="color:#888;">Max DD: {st_bt_results.get('max_drawdown_pct', 0):.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m4:
+                st.markdown(f"""
+                <div class="metric-card" style="text-align:center; padding:20px;">
+                    <div style="color:#888; font-size:0.75em; text-transform:uppercase;">Trades</div>
+                    <div style="font-size:2em; font-weight:800; color:#e0e0ff;">{st_bt_results['total_trades']}</div>
+                    <div style="color:#888;">{STRANGLE_OTM_WIDTH*100:.0f}% OTM width</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Equity curve
+            if not st_equity_df.empty and "equity" in st_equity_df.columns:
+                fig_eq = go.Figure()
+                eq_color = "#00ff88" if st_bt_results['total_pnl'] >= 0 else "#ff4444"
+                fig_eq.add_trace(go.Scatter(
+                    x=st_equity_df["date"], y=st_equity_df["equity"],
+                    mode="lines", name="Equity",
+                    line=dict(color=eq_color, width=2.5),
+                    fill="tozeroy", fillcolor=f"rgba({','.join(str(int(eq_color.lstrip('#')[i:i+2], 16)) for i in (0, 2, 4))},0.08)",
+                ))
+                fig_eq.add_hline(y=bt_capital, line_dash="dash", line_color="#666",
+                                 annotation_text="Initial Capital")
+                fig_eq.update_layout(
+                    title="Strangle Equity Curve",
+                    template="plotly_dark", height=350,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,15,30,0.8)",
+                    margin=dict(l=60, r=20, t=40, b=30),
+                    yaxis_title="Capital ($)", yaxis_tickprefix="$",
+                )
+                st.plotly_chart(fig_eq, use_container_width=True)
+
+            # P&L Distribution
+            if len(st_trades_df) > 0:
+                st_colors = ["#00ff88" if x > 0 else "#ff4444" for x in st_trades_df["net_pnl"]]
+                fig_pnl = go.Figure(go.Bar(
+                    x=list(range(1, len(st_trades_df)+1)), y=st_trades_df["net_pnl"],
+                    marker_color=st_colors, name="Net P&L",
+                ))
+                fig_pnl.add_hline(y=0, line_color="#666")
+                fig_pnl.update_layout(template="plotly_dark", height=300,
+                                       xaxis_title="Trade #", yaxis_title="Net P&L ($)",
+                                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,15,30,0.8)",
+                                       margin=dict(l=60, r=20, t=20, b=40))
+                st.plotly_chart(fig_pnl, use_container_width=True)
+
+            # Trade log
+            st.subheader("Strangle Trade Log")
+            st.dataframe(st_bt.get_trades_df(), use_container_width=True, hide_index=True)
+
+            # Strategy explanation
+            st.markdown(f"""
+            <div class="metric-card" style="padding:20px;">
+                <h3 style="margin-top:0;">📖 Strategy: GARCH-Informed Long Strangle</h3>
+                <p><b>Structure:</b> Buy OTM call (strike = spot × {1+STRANGLE_OTM_WIDTH:.2f}) +
+                OTM put (strike = spot × {1-STRANGLE_OTM_WIDTH:.2f}). Both legs are
+                {STRANGLE_OTM_WIDTH*100:.0f}% out-of-the-money.</p>
+                <p><b>Signal:</b> Same GARCH model as the straddle — when GARCH forecast RV exceeds
+                30-day historical vol by ≥{STRANGLE_ENTRY_VOL_THRESHOLD*100:.0f}%, a BUY VOL signal fires.</p>
+                <p><b>Advantage vs Straddle:</b> Lower premium cost allows more contracts or preserves
+                capital. Best suited when expecting very large moves (earnings, catalysts, macro events).</p>
+                <p><b>Disadvantage:</b> Needs a bigger move to profit — spot must breach one of the OTM
+                strikes. With small moves, both legs expire worthless = full premium loss.</p>
+                <p><b>Exit:</b> Hold for {STRANGLE_HOLDING_PERIOD_DAYS} trading days, close at intrinsic value.
+                Same auto-close daemon (+12% TP / -30% SL) applies in live trading.</p>
+                <p style="color:#888; font-size:0.85em;">⚠️ Backtest uses Black-Scholes synthetic pricing.
+                Live trading uses real market prices. Strangles are inherently harder to profit from
+                than straddles because both legs start OTM.</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -412,80 +553,336 @@ if run_btn:
         else:
             st.info("No options chain data available for this ticker.")
 
+    # ─── Tab 6: Model & Methodology ──────────────────────────────
+    with tab6:
+        st.markdown("""
+        <div class="metric-card" style="padding:30px; text-align:center; margin-bottom:20px;">
+            <h2 style="margin:0;">GARCH Volatility Trading System</h2>
+            <p style="color:#aaa; margin:5px 0;">GJR-GARCH(1,1,1) · Student-t Innovations · Long Straddle Strategy</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Overview ──
+        st.markdown("### 🏗️ System Architecture")
+        st.markdown("""
+        This system uses two models with distinct roles:
+
+        | Component | Model | Role |
+        |---|---|---|
+        | **Decision Engine** | GJR-GARCH(1,1,1) | Forecasts realized volatility and generates buy/sell signals |
+        | **Interpretability** | Transformer Encoder | Identifies which features drive volatility (display only) |
+
+        > **The Transformer does NOT influence trading decisions.** It is trained alongside GARCH to
+        > provide feature importance rankings via attention weights and gradient saliency. The GARCH
+        > model is the sole decision-maker for all trade entries and exits.
+
+        ```
+        ┌────────────────────────────────────────────────────────────┐
+        │  DATA LAYER — Yahoo Finance API                           │
+        │  OHLCV, VIX, 10Y Treasury, Live Options Chains            │
+        │  Local CSV cache (12-hour freshness)                       │
+        └──────────────┬─────────────────────────────────────────────┘
+                       │
+        ┌──────────────▼─────────────────────────────────────────────┐
+        │  MODEL LAYER                                               │
+        │  GARCH(1,1) vs GJR-GARCH(1,1,1) — AIC selection           │
+        │  Student-t distribution for fat tails                      │
+        │  Transformer — feature importance only (no signal role)    │
+        └──────────────┬─────────────────────────────────────────────┘
+                       │
+        ┌──────────────▼─────────────────────────────────────────────┐
+        │  SIGNAL LAYER                                              │
+        │  GARCH Forecast RV vs 30d Rolling Historical Vol           │
+        │  Signal threshold: ±5pp spread                             │
+        │  Entry threshold: ≥3% RV-HV spread for trade execution     │
+        │  Scanner: 42 tickers × 3 strikes each                     │
+        └──────────────┬─────────────────────────────────────────────┘
+                       │
+        ┌──────────────▼─────────────────────────────────────────────┐
+        │  EXECUTION LAYER                                           │
+        │  Webull OpenAPI (HMAC-SHA1 signed)                         │
+        │  Two atomic SINGLE-leg orders (call + put)                 │
+        │  Auto-close daemon: +12% take-profit, 30s polling          │
+        └────────────────────────────────────────────────────────────┘
+        ```
+        """)
+
+        st.markdown("---")
+
+        # ── GARCH Model ──
+        st.markdown("### 📐 The GARCH Model")
+        m1, m2 = st.columns(2)
+        with m1:
+            st.markdown("""
+            **Symmetric GARCH(1,1):**
+            ```
+            σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}
+            ```
+            - `ω` — long-run variance constant
+            - `α` — ARCH coeff (shock reaction)
+            - `β` — GARCH coeff (persistence)
+            - Constraint: α + β < 1 (stationarity)
+            """)
+        with m2:
+            st.markdown("""
+            **Asymmetric GJR-GARCH(1,1,1):**
+            ```
+            σ²_t = ω + (α + γ·I_{t-1})·ε²_{t-1} + β·σ²_{t-1}
+            I_{t-1} = 1 if ε_{t-1} < 0, else 0
+            ```
+            - `γ` — leverage parameter (asymmetry)
+            - Captures the **leverage effect**: negative returns
+              increase vol more than positive returns
+            """)
+
+        st.markdown("""
+        Both models are fitted to the full price history. The model with the **lower AIC** is selected.
+        GJR-GARCH is selected ~70% of the time, confirming that leverage effects are present
+        in most equity returns. Returns are modeled with a **Student-t distribution** to capture
+        the fat tails observed in financial markets.
+        """)
+
+        st.markdown("""
+        | Parameter | Value | Rationale |
+        |---|---|---|
+        | p (GARCH lag) | 1 | Standard; higher orders rarely improve fit |
+        | q (ARCH lag) | 1 | Captures immediate shock reaction |
+        | o (Leverage lag) | 1 | One asymmetric term for leverage effect |
+        | Distribution | Student-t | Fat tails in equity returns |
+        | Return scaling | ×100 | Numerical stability for MLE optimizer |
+        | Trading days | 252 | Standard US market annualization |
+        """)
+
+        st.markdown("---")
+
+        # ── Transformer ──
+        st.markdown("### 🧠 The Transformer Model (Interpretability Only)")
+        st.markdown("""
+        A PyTorch **Transformer encoder** is trained alongside GARCH to provide
+        feature-level interpretability. It does **not** generate signals or influence
+        trade decisions.
+
+        | Component | Value |
+        |---|---|
+        | Architecture | TransformerEncoder → GlobalAvgPool → Linear Head |
+        | Lookback window | 30 trading days |
+        | Internal dimension | 64 (d_model) |
+        | Attention heads | 4 |
+        | Encoder layers | 2 |
+        | Feedforward dim | 128 |
+        | Dropout | 10% |
+        | Optimizer | AdamW (lr=1e-3, weight_decay=1e-4) |
+        | Scheduler | Cosine Annealing |
+        | Early stopping | Patience = 15 epochs |
+
+        **21 input features** are computed from price data, volume, technicals (RSI, MACD,
+        Bollinger, ATR), market regime (VIX), options data (P/C ratio, avg IV), and macro
+        (10Y Treasury yield). Feature importance is extracted via:
+        1. **Gradient saliency** — |∂output/∂input| averaged across test samples
+        2. **Attention weights** — averaged across heads and layers for temporal importance
+        """)
+
+        st.markdown("---")
+
+        # ── Scanning Pipeline ──
+        st.markdown("### 🔍 Live Scanning Pipeline")
+        st.markdown("""
+        The scanner runs across a universe of **42 budget-friendly tickers** (stocks priced ~$1–$30)
+        to find the best straddle opportunities.
+
+        **For each of the 42 tickers:**
+        1. Fetch the **live options chain** from Yahoo Finance
+        2. Find the nearest expiration **~14 days out**
+        3. Try ATM and **±1 strikes** (3 candidates per ticker)
+        4. Compute straddle cost: `(call_price + put_price) × 100 + $1.30 commission`
+        5. Filter: must fit within the **$150 budget**
+        6. Fit GARCH on full price history → extract **conditional volatility**
+        7. Compute 30-day rolling close-to-close historical vol (annualized)
+        8. Compute spread: `GARCH_RV − 30d_hist_vol`
+           - Uses **30-day rolling historical vol** as the benchmark (backtested to outperform option IV proxy by +69%)
+        9. Sort all opportunities by spread (strongest positive signal first)
+        10. Return **Top 8** recommendations
+
+        > ⚠️ The sidebar ticker dropdown shows 16 featured tickers for quick individual analysis.
+        > The full 42-ticker scan universe is used on this landing page when you click "Refresh Scan".
+        """)
+
+        st.markdown("---")
+
+        # ── Signal Logic ──
+        st.markdown("### 📡 Signal Generation")
+        st.markdown("""
+        The system uses **two separate thresholds** for different purposes:
+
+        | Threshold | Value | Purpose |
+        |---|---|---|
+        | **Signal threshold** | ±5pp spread | Determines signal direction (BUY/SELL/NEUTRAL) in the signal generator |
+        | **Entry threshold** | ≥3% RV-HV spread | Required to actually open a backtest or live trade position |
+
+        **Signal direction logic:**
+        ```
+        Spread = GARCH_RV − 30d_Hist_Vol
+
+        If Spread > +5pp:  BUY VOL  → Long straddle (options underpriced)
+        If Spread < −5pp:  SELL VOL → Short straddle (options overpriced)
+        Otherwise:         NEUTRAL  → No trade
+        ```
+
+        **Signal strength** is computed as `|Spread| / max(Hist_Vol, 0.01)` and scaled 0–100.
+        A stronger signal indicates greater relative mispricing.
+        """)
+
+        st.markdown("---")
+
+        # ── Backtesting ──
+        st.markdown("### 🧪 Backtesting Methodology")
+        st.markdown(f"""
+        The rigorous backtester uses a **60/20/20 chronological split**:
+
+        ```
+        |←── Train (60%) ──→|←── Val (20%) ──→|←── Test (20%) ──→|
+           Jan 2022              Mid 2024           Late 2025
+           ~648 days             ~216 days           ~217 days
+        ```
+
+        - **Training set** — GARCH parameters (ω, α, β, γ, ν) are estimated
+        - **Validation set** — Pearson correlation between GARCH vol forecast and 5-day rolling RV
+          (target: correlation > 0.5)
+        - **Test set** — Completely unseen data used for backtest P&L simulation
+
+        **Default backtest parameters (configurable in sidebar):**
+
+        | Parameter | Value |
+        |---|---|
+        | Starting capital | ${INITIAL_CAPITAL:.0f} |
+        | Holding period | {HOLDING_PERIOD_DAYS} trading days |
+        | Entry threshold | GARCH RV > 30d HV by {ENTRY_VOL_THRESHOLD*100:.0f}%+ |
+        | Max position size | 90% of capital |
+        | Commission | $0.65 per contract per leg |
+
+        **Exit rules:**
+        - Hold for the specified period, then exit at intrinsic value
+        - In backtesting, the hold strategy outperformed stop-loss strategies
+
+        **Note:** Backtesting uses **Black-Scholes synthetic pricing** because historical
+        options data is not freely available. Both the backtester and the live scanner use
+        **30-day rolling close-to-close historical vol** as the benchmark. This approach
+        outperformed the Garman-Klass OHLC IV proxy in head-to-head backtesting (+1,247% vs +736%).
+        """)
+
+        st.markdown("---")
+
+        # ── Live Execution ──
+        st.markdown("### 🔴 Live Execution & Risk Management")
+        st.markdown("""
+        **Execution via Webull OpenAPI:**
+        - HMAC-SHA1 signed authentication on every request
+        - Token-based 2FA via Webull mobile app
+        - Two separate SINGLE-leg LIMIT orders (call + put)
+        - GTC time-in-force for buys, DAY for sells
+
+        **Auto-Close Daemon** (`broker/auto_close.py`):
+        - Market hours (9:30 AM – 4:00 PM ET): polls every 30 seconds
+        - Off-hours: polls every 5 minutes
+        - **Take-profit trigger: +12% unrealized return** → auto-sell both legs
+        - **Stop-loss trigger: -30% unrealized return** → auto-sell both legs to cap losses
+        - All checks logged to `cache/auto_close.log`
+        - Closed trades recorded in `cache/closed_trades.json` with exit reason
+
+        **Risk controls:**
+
+        | Control | Value |
+        |---|---|
+        | Budget per trade | $150 max |
+        | Position sizing | 90% of capital max |
+        | Concentration | Single best signal executed (max conviction) |
+        | Max loss | Premium paid (defined risk, no naked options) |
+        | Auto take-profit | +12% unrealized P&L |
+        | Auto stop-loss | -30% unrealized P&L |
+        | Data freshness | 12-hour cache; live options for scanning |
+        """)
+
 else:
     # Landing page with scanner
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card" style="text-align:center; padding:40px;">
         <h2 style="margin-bottom:10px;">Volatility Trading System</h2>
-        <p style="color:#aaa;">GARCH + Transformer | Long Straddle | $150 Budget | Webull-compatible</p>
+        <p style="color:#aaa;">GARCH (Decision) + Transformer (Interpretability) | Long Straddle |
+        ${INITIAL_CAPITAL:.0f} Budget | {HOLDING_PERIOD_DAYS}-Day Hold | +12% TP / -30% SL | Webull</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ═══ TOP 8 SCANNER ══════════════════════════════════════════
-    st.markdown("---")
-    st.markdown("## 🔍 Top 8 Recommendations — Next Trading Day")
-    scan_col1, scan_col2 = st.columns([3, 1])
-    with scan_col2:
-        scan_btn = st.button("🔄 Refresh Scan", use_container_width=True, type="primary")
+    # ═══ LANDING PAGE TABS ══════════════════════════════════════
+    landing_tab1, landing_tab3, landing_tab2 = st.tabs([
+        "🔍 Straddle Scanner & Trading", "🔀 Strangle Scanner", "📖 Methodology"
+    ])
 
-    if scan_btn or "scan_results" not in st.session_state:
+    with landing_tab1:
+        # ═══ TOP 8 SCANNER ══════════════════════════════════════════
+        st.markdown("---")
+        st.markdown("## 🔍 Top 8 Recommendations — Next Trading Day")
+        scan_col1, scan_col2 = st.columns([3, 1])
+        with scan_col2:
+            scan_btn = st.button("🔄 Refresh Scan", use_container_width=True, type="primary")
+
         if scan_btn or "scan_results" not in st.session_state:
-            with st.status("Scanning 42 tickers — GARCH RV vs actual option IV...", expanded=True) as status:
-                st.write("Fetching live options chains & comparing GARCH forecast RV against actual implied volatility...")
-                from signals.scanner import scan_for_opportunities
-                recs = scan_for_opportunities(budget=bt_capital, top_n=8)
-                st.session_state["scan_results"] = recs
-                status.update(label=f"Scan complete — {len(recs)} opportunities found!", state="complete")
+            if scan_btn or "scan_results" not in st.session_state:
+                with st.status("Scanning 42 tickers — GARCH RV vs 30d historical vol...", expanded=True) as status:
+                    st.write("Fitting GARCH on each ticker & comparing forecast RV against 30-day rolling historical volatility...")
+                    from signals.scanner import scan_for_opportunities
+                    recs = scan_for_opportunities(budget=bt_capital, top_n=8)
+                    st.session_state["scan_results"] = recs
+                    status.update(label=f"Scan complete — {len(recs)} opportunities found!", state="complete")
 
-    recs = st.session_state.get("scan_results", [])
-    if recs:
-        for i, r in enumerate(recs):
-            spread_pct = r['spread'] * 100
-            signal_color = "#00cc66" if spread_pct > 10 else "#FFD93D" if spread_pct > 5 else "#ff8844"
-            st.markdown(f"""
-            <div class="metric-card" style="padding:15px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
-                <div style="min-width:50px; text-align:center;">
-                    <span style="font-size:1.5em; font-weight:700; color:{signal_color};">#{i+1}</span>
-                </div>
-                <div style="min-width:80px;">
-                    <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">{r['ticker']}</div>
-                    <div style="color:#888; font-size:0.85em;">${r['spot']:.2f}</div>
-                </div>
-                <div style="flex:1; min-width:200px;">
-                    <div style="color:#aaa;">
-                        <b>${r['strike']} Straddle</b> — {r['expiry']}
+        recs = st.session_state.get("scan_results", [])
+        if recs:
+            for i, r in enumerate(recs):
+                spread_pct = r['spread'] * 100
+                signal_color = "#00cc66" if spread_pct > 10 else "#FFD93D" if spread_pct > 5 else "#ff8844"
+                st.markdown(f"""
+                <div class="metric-card" style="padding:15px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                    <div style="min-width:50px; text-align:center;">
+                        <span style="font-size:1.5em; font-weight:700; color:{signal_color};">#{i+1}</span>
                     </div>
-                    <div style="color:#888; font-size:0.85em;">
-                        {r['contracts']}x @ ${r['call_price']:.2f}C + ${r['put_price']:.2f}P = <b>${r['total_cost']:.2f}</b>
+                    <div style="min-width:80px;">
+                        <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">{r['ticker']}</div>
+                        <div style="color:#888; font-size:0.85em;">${r['spot']:.2f}</div>
+                    </div>
+                    <div style="flex:1; min-width:200px;">
+                        <div style="color:#aaa;">
+                            <b>${r['strike']} Straddle</b> — {r['expiry']}
+                        </div>
+                        <div style="color:#888; font-size:0.85em;">
+                            {r['contracts']}x @ ${r['call_price']:.2f}C + ${r['put_price']:.2f}P = <b>${r['total_cost']:.2f}</b>
+                        </div>
+                    </div>
+                    <div style="min-width:100px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">GARCH RV</div>
+                        <div style="color:#e0e0ff; font-weight:600;">{r['garch_rv']:.1%}</div>
+                    </div>
+                    <div style="min-width:100px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">30d Hist Vol</div>
+                        <div style="color:#e0e0ff; font-weight:600;">{r['hist_vol']:.1%}</div>
+                    </div>
+                    <div style="min-width:140px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">RV-HV Spread</div>
+                        <div style="font-size:1.2em; font-weight:700; color:{signal_color};">+{spread_pct:.1f}%</div>
+                    </div>
+                    <div style="min-width:120px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">Liquidity</div>
+                        <div style="color:#ccc;">{r['liquidity']:,} vol</div>
                     </div>
                 </div>
-                <div style="min-width:100px; text-align:center;">
-                    <div style="font-size:0.8em; color:#888;">GARCH RV</div>
-                    <div style="color:#e0e0ff; font-weight:600;">{r['garch_rv']:.1%}</div>
-                </div>
-                <div style="min-width:100px; text-align:center;">
-                    <div style="font-size:0.8em; color:#888;">Option IV</div>
-                    <div style="color:#e0e0ff; font-weight:600;">{r['mkt_iv']:.1%}</div>
-                </div>
-                <div style="min-width:140px; text-align:center;">
-                    <div style="font-size:0.8em; color:#888;">RV-IV Spread</div>
-                    <div style="font-size:1.2em; font-weight:700; color:{signal_color};">+{spread_pct:.1f}%</div>
-                </div>
-                <div style="min-width:120px; text-align:center;">
-                    <div style="font-size:0.8em; color:#888;">Liquidity</div>
-                    <div style="color:#ccc;">{r['liquidity']:,} vol</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.info("No opportunities found within budget. Click Refresh to scan.")
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No opportunities found within budget. Click Refresh to scan.")
 
-    st.markdown("---")
-    st.caption("Select a ticker in the sidebar and click **Run Analysis + Backtest** for detailed analysis.")
+        st.markdown("---")
+        st.caption("Select a ticker in the sidebar and click **Run Analysis + Backtest** for detailed analysis.")
 
-    # ── Live Position Tracker ─────────────────────────────────────
-    st.markdown("---")
-    st.markdown("""
+        # ── Live Position Tracker ─────────────────────────────────────
+        st.markdown("---")
+        st.markdown("""
     <div style="text-align:center; margin:30px 0 15px 0;">
         <span style="font-size:1.8em; font-weight:700;
               background: linear-gradient(90deg, #00ff88, #00ccff);
@@ -495,264 +892,621 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    from broker.position_tracker import fetch_live_positions, get_pnl_history
+        from broker.position_tracker import fetch_live_positions, get_pnl_history
 
-    refresh_col1, refresh_col2 = st.columns([3, 1])
-    with refresh_col2:
-        refresh_pos = st.button("🔄 Refresh Positions", use_container_width=True)
+        refresh_col1, refresh_col2 = st.columns([3, 1])
+        with refresh_col2:
+            refresh_pos = st.button("🔄 Refresh Positions", use_container_width=True)
 
-    if refresh_pos or "pos_data" not in st.session_state:
-        try:
-            pos_data = fetch_live_positions()
-            if pos_data:
-                st.session_state["pos_data"] = pos_data
-        except Exception as e:
-            st.error(f"Failed to fetch positions: {e}")
+        if refresh_pos or "pos_data" not in st.session_state:
+            try:
+                pos_data = fetch_live_positions()
+                if pos_data:
+                    st.session_state["pos_data"] = pos_data
+            except Exception as e:
+                st.error(f"Failed to fetch positions: {e}")
 
-    pos_data = st.session_state.get("pos_data")
+        pos_data = st.session_state.get("pos_data")
 
-    if pos_data and pos_data.get("straddles"):
-        # ── Portfolio Summary Metrics ──
-        total_pnl = pos_data["total_pnl"]
-        total_pnl_pct = pos_data["total_pnl_pct"]
-        total_cost = pos_data["total_cost"]
-        total_value = pos_data["total_value"]
-        pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4444"
-        pnl_arrow = "▲" if total_pnl >= 0 else "▼"
-
-        st.markdown(f"""
-        <div class="metric-card" style="padding:25px; text-align:center; border-color:{pnl_color}40;">
-            <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
-                <div>
-                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Total P&L</div>
-                    <div style="font-size:2.2em; font-weight:800; color:{pnl_color};">
-                        {pnl_arrow} ${abs(total_pnl):.2f}
-                    </div>
-                    <div style="font-size:1.1em; color:{pnl_color}; font-weight:600;">
-                        {'+' if total_pnl >= 0 else ''}{total_pnl_pct:.2f}%
-                    </div>
-                </div>
-                <div>
-                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Cost Basis</div>
-                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_cost:.2f}</div>
-                </div>
-                <div>
-                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Market Value</div>
-                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_value:.2f}</div>
-                </div>
-                <div>
-                    <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Positions</div>
-                    <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">{len(pos_data['straddles'])}</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ── Individual Straddle Cards ──
-        for key, s in pos_data["straddles"].items():
-            s_pnl_color = "#00ff88" if s["total_pnl"] >= 0 else "#ff4444"
-            s_arrow = "▲" if s["total_pnl"] >= 0 else "▼"
-
-            call = s.get("call") or {}
-            put = s.get("put") or {}
-            call_pnl = call.get("unrealized_pnl", 0)
-            put_pnl = put.get("unrealized_pnl", 0)
-            call_color = "#00ff88" if call_pnl >= 0 else "#ff4444"
-            put_color = "#00ff88" if put_pnl >= 0 else "#ff4444"
+        if pos_data and pos_data.get("straddles"):
+            # ── Portfolio Summary Metrics ──
+            total_pnl = pos_data["total_pnl"]
+            total_pnl_pct = pos_data["total_pnl_pct"]
+            total_cost = pos_data["total_cost"]
+            total_value = pos_data["total_value"]
+            pnl_color = "#00ff88" if total_pnl >= 0 else "#ff4444"
+            pnl_arrow = "▲" if total_pnl >= 0 else "▼"
 
             st.markdown(f"""
-            <div class="metric-card" style="padding:18px 24px; margin:12px 0; border-color:{s_pnl_color}30;">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+            <div class="metric-card" style="padding:25px; text-align:center; border-color:{pnl_color}40;">
+                <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px;">
                     <div>
-                        <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">
-                            {s['symbol']} ${s['strike']:.0f} Straddle
+                        <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Total P&L</div>
+                        <div style="font-size:2.2em; font-weight:800; color:{pnl_color};">
+                            {pnl_arrow} ${abs(total_pnl):.2f}
                         </div>
-                        <div style="color:#888; font-size:0.85em;">Exp: {s['expiry']}</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:0.75em; color:#888; text-transform:uppercase;">Total P&L</div>
-                        <div style="font-size:1.6em; font-weight:800; color:{s_pnl_color};">
-                            {s_arrow} ${abs(s['total_pnl']):.2f}
-                        </div>
-                        <div style="font-size:0.9em; color:{s_pnl_color}; font-weight:600;">
-                            {'+' if s['pnl_pct'] >= 0 else ''}{s['pnl_pct']:.2f}%
+                        <div style="font-size:1.1em; color:{pnl_color}; font-weight:600;">
+                            {'+' if total_pnl >= 0 else ''}{total_pnl_pct:.2f}%
                         </div>
                     </div>
-                    <div style="display:flex; gap:20px;">
-                        <div style="text-align:center; min-width:100px;">
-                            <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📞 Call</div>
-                            <div style="color:#e0e0ff; font-weight:600;">
-                                {call.get('quantity', 0)}x @ ${call.get('cost_price', 0):.2f}
-                            </div>
-                            <div style="font-size:0.85em; color:{call_color};">
-                                Now: ${call.get('last_price', 0):.3f} ({'+' if call_pnl >= 0 else ''}${call_pnl:.2f})
-                            </div>
-                        </div>
-                        <div style="text-align:center; min-width:100px;">
-                            <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📉 Put</div>
-                            <div style="color:#e0e0ff; font-weight:600;">
-                                {put.get('quantity', 0)}x @ ${put.get('cost_price', 0):.2f}
-                            </div>
-                            <div style="font-size:0.85em; color:{put_color};">
-                                Now: ${put.get('last_price', 0):.3f} ({'+' if put_pnl >= 0 else ''}${put_pnl:.2f})
-                            </div>
-                        </div>
+                    <div>
+                        <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Cost Basis</div>
+                        <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_cost:.2f}</div>
                     </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:0.7em; color:#888; text-transform:uppercase;">Day P&L</div>
-                        <div style="font-size:1em; font-weight:600; color:{'#00ff88' if s['day_pnl'] >= 0 else '#ff4444'};">
-                            {'+' if s['day_pnl'] >= 0 else ''}${s['day_pnl']:.2f}
-                        </div>
+                    <div>
+                        <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Market Value</div>
+                        <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">${total_value:.2f}</div>
+                    </div>
+                    <div>
+                        <div style="color:#888; font-size:0.8em; text-transform:uppercase; letter-spacing:1px;">Positions</div>
+                        <div style="font-size:1.5em; font-weight:600; color:#e0e0ff;">{len(pos_data['straddles'])}</div>
                     </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        # ── P&L History Chart ──
-        history = get_pnl_history()
-        if len(history) >= 2:
-            import pandas as pd
-            hist_df = pd.DataFrame(history)
-            hist_df["timestamp"] = pd.to_datetime(hist_df["timestamp"])
-            hist_df = hist_df.sort_values("timestamp")
+            # ── Individual Straddle Cards ──
+            for key, s in pos_data["straddles"].items():
+                s_pnl_color = "#00ff88" if s["total_pnl"] >= 0 else "#ff4444"
+                s_arrow = "▲" if s["total_pnl"] >= 0 else "▼"
 
-            fig_pnl = go.Figure()
-            fig_pnl.add_trace(go.Scatter(
-                x=hist_df["timestamp"],
-                y=hist_df["total_pnl"],
-                mode="lines+markers",
-                name="P&L ($)",
-                line=dict(color="#00ff88" if hist_df["total_pnl"].iloc[-1] >= 0 else "#ff4444",
-                          width=3),
-                marker=dict(size=6),
-                fill="tozeroy",
-                fillcolor="rgba(0,255,136,0.08)" if hist_df["total_pnl"].iloc[-1] >= 0
-                          else "rgba(255,68,68,0.08)",
-            ))
-            fig_pnl.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
-            fig_pnl.update_layout(
-                title=dict(text="Position P&L Over Time", font=dict(color="#e0e0ff", size=16)),
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
-                yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
-                           title="Unrealized P&L ($)", tickprefix="$"),
-                height=350,
-                margin=dict(l=50, r=20, t=50, b=30),
-                font=dict(color="#ccc"),
-            )
-            st.plotly_chart(fig_pnl, use_container_width=True)
+                call = s.get("call") or {}
+                put = s.get("put") or {}
+                call_pnl = call.get("unrealized_pnl", 0)
+                put_pnl = put.get("unrealized_pnl", 0)
+                call_color = "#00ff88" if call_pnl >= 0 else "#ff4444"
+                put_color = "#00ff88" if put_pnl >= 0 else "#ff4444"
 
-            # P&L % chart
-            fig_pct = go.Figure()
-            fig_pct.add_trace(go.Scatter(
-                x=hist_df["timestamp"],
-                y=hist_df["total_pnl_pct"],
-                mode="lines+markers",
-                name="P&L %",
-                line=dict(color="#00ccff", width=2),
-                marker=dict(size=5),
-            ))
-            fig_pct.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
-            fig_pct.update_layout(
-                title=dict(text="Return (%)", font=dict(color="#e0e0ff", size=14)),
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
-                yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
-                           title="Return %", ticksuffix="%"),
-                height=250,
-                margin=dict(l=50, r=20, t=40, b=30),
-                font=dict(color="#ccc"),
-            )
-            st.plotly_chart(fig_pct, use_container_width=True)
-        else:
-            st.info("📊 P&L chart will appear after the second refresh — keep clicking **Refresh Positions** to build history.")
-    elif pos_data is not None:
-        st.info("No open option positions found. Execute a trade to start tracking.")
+                st.markdown(f"""
+                <div class="metric-card" style="padding:18px 24px; margin:12px 0; border-color:{s_pnl_color}30;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                        <div>
+                            <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">
+                                {s['symbol']} ${s['strike']:.0f} Straddle
+                            </div>
+                            <div style="color:#888; font-size:0.85em;">Exp: {s['expiry']}</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.75em; color:#888; text-transform:uppercase;">Total P&L</div>
+                            <div style="font-size:1.6em; font-weight:800; color:{s_pnl_color};">
+                                {s_arrow} ${abs(s['total_pnl']):.2f}
+                            </div>
+                            <div style="font-size:0.9em; color:{s_pnl_color}; font-weight:600;">
+                                {'+' if s['pnl_pct'] >= 0 else ''}{s['pnl_pct']:.2f}%
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:20px;">
+                            <div style="text-align:center; min-width:100px;">
+                                <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📞 Call</div>
+                                <div style="color:#e0e0ff; font-weight:600;">
+                                    {call.get('quantity', 0)}x @ ${call.get('cost_price', 0):.2f}
+                                </div>
+                                <div style="font-size:0.85em; color:{call_color};">
+                                    Now: ${call.get('last_price', 0):.3f} ({'+' if call_pnl >= 0 else ''}${call_pnl:.2f})
+                                </div>
+                            </div>
+                            <div style="text-align:center; min-width:100px;">
+                                <div style="font-size:0.7em; color:#888; text-transform:uppercase;">📉 Put</div>
+                                <div style="color:#e0e0ff; font-weight:600;">
+                                    {put.get('quantity', 0)}x @ ${put.get('cost_price', 0):.2f}
+                                </div>
+                                <div style="font-size:0.85em; color:{put_color};">
+                                    Now: ${put.get('last_price', 0):.3f} ({'+' if put_pnl >= 0 else ''}${put_pnl:.2f})
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.7em; color:#888; text-transform:uppercase;">Day P&L</div>
+                            <div style="font-size:1em; font-weight:600; color:{'#00ff88' if s['day_pnl'] >= 0 else '#ff4444'};">
+                                {'+' if s['day_pnl'] >= 0 else ''}${s['day_pnl']:.2f}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-    # ── Live Trading Panel ───────────────────────────────────────
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align:center; margin:30px 0 15px 0;">
-        <span style="font-size:1.8em; font-weight:700; color:#ff6b6b;">
-            🔴 Live Trading — Webull
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+            # ── P&L History Chart ──
+            history = get_pnl_history()
+            if len(history) >= 2:
+                import pandas as pd
+                hist_df = pd.DataFrame(history)
+                hist_df["timestamp"] = pd.to_datetime(hist_df["timestamp"])
+                hist_df = hist_df.sort_values("timestamp")
 
+                fig_pnl = go.Figure()
+                fig_pnl.add_trace(go.Scatter(
+                    x=hist_df["timestamp"],
+                    y=hist_df["total_pnl"],
+                    mode="lines+markers",
+                    name="P&L ($)",
+                    line=dict(color="#00ff88" if hist_df["total_pnl"].iloc[-1] >= 0 else "#ff4444",
+                              width=3),
+                    marker=dict(size=6),
+                    fill="tozeroy",
+                    fillcolor="rgba(0,255,136,0.08)" if hist_df["total_pnl"].iloc[-1] >= 0
+                              else "rgba(255,68,68,0.08)",
+                ))
+                fig_pnl.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
+                fig_pnl.update_layout(
+                    title=dict(text="Position P&L Over Time", font=dict(color="#e0e0ff", size=16)),
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
+                    yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
+                               title="Unrealized P&L ($)", tickprefix="$"),
+                    height=350,
+                    margin=dict(l=50, r=20, t=50, b=30),
+                    font=dict(color="#ccc"),
+                )
+                st.plotly_chart(fig_pnl, use_container_width=True)
 
-    from broker.webull_client import get_accounts, activate_token, execute_top_trade
-
-    col_status, col_actions = st.columns([1, 2])
-
-    with col_status:
-        st.markdown("#### Connection Status")
-        try:
-            accts = get_accounts()
-            if accts:
-                st.success(f"✅ Connected — {len(accts)} account(s)")
-                for a in accts:
-                    st.markdown(f"**{a.get('account_type', 'Account')}**: `{a.get('account_id', 'N/A')}`")
+                # P&L % chart
+                fig_pct = go.Figure()
+                fig_pct.add_trace(go.Scatter(
+                    x=hist_df["timestamp"],
+                    y=hist_df["total_pnl_pct"],
+                    mode="lines+markers",
+                    name="P&L %",
+                    line=dict(color="#00ccff", width=2),
+                    marker=dict(size=5),
+                ))
+                fig_pct.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.2)")
+                fig_pct.update_layout(
+                    title=dict(text="Return (%)", font=dict(color="#e0e0ff", size=14)),
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    xaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888"),
+                    yaxis=dict(gridcolor="rgba(100,100,255,0.08)", color="#888",
+                               title="Return %", ticksuffix="%"),
+                    height=250,
+                    margin=dict(l=50, r=20, t=40, b=30),
+                    font=dict(color="#ccc"),
+                )
+                st.plotly_chart(fig_pct, use_container_width=True)
             else:
-                st.warning("⚠️ Not authenticated. Generate a token below.")
-        except Exception as e:
-            st.error(f"Connection error: {e}")
+                st.info("📊 P&L chart will appear after the second refresh — keep clicking **Refresh Positions** to build history.")
+        elif pos_data is not None:
+            st.info("No open option positions found. Execute a trade to start tracking.")
 
-    with col_actions:
-        st.markdown("#### Actions")
+        # ── Live Trading Panel ───────────────────────────────────────
+        st.markdown("---")
+        st.markdown("""
+        <div style="text-align:center; margin:30px 0 15px 0;">
+            <span style="font-size:1.8em; font-weight:700; color:#ff6b6b;">
+                🔴 Live Trading — Webull
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
 
-        act_col1, act_col2 = st.columns(2)
-        with act_col1:
-            if st.button("🔑 Generate Token", use_container_width=True):
-                with st.spinner("Creating token... Check your Webull app!"):
-                    success = activate_token()
-                    if success:
-                        st.success("Token activated! Refresh page to see status.")
-                        st.rerun()
+
+        from broker.webull_client import get_accounts, activate_token, execute_top_trade
+
+        col_status, col_actions = st.columns([1, 2])
+
+        with col_status:
+            st.markdown("#### Connection Status")
+            try:
+                accts = get_accounts()
+                if accts:
+                    st.success(f"✅ Connected — {len(accts)} account(s)")
+                    for a in accts:
+                        st.markdown(f"**{a.get('account_type', 'Account')}**: `{a.get('account_id', 'N/A')}`")
+                else:
+                    st.warning("⚠️ Not authenticated. Generate a token below.")
+            except Exception as e:
+                st.error(f"Connection error: {e}")
+
+        with col_actions:
+            st.markdown("#### Actions")
+
+            act_col1, act_col2 = st.columns(2)
+            with act_col1:
+                if st.button("🔑 Generate Token", use_container_width=True):
+                    with st.spinner("Creating token... Check your Webull app!"):
+                        success = activate_token()
+                        if success:
+                            st.success("Token activated! Refresh page to see status.")
+                            st.rerun()
+                        else:
+                            st.error("Token verification timed out. Try again.")
+
+            with act_col2:
+                live_mode = st.checkbox("Enable LIVE mode", value=False,
+                                         help="⚠️ When enabled, orders will be placed with real money!")
+
+            st.markdown("---")
+
+            trade_btn = st.button(
+                "🚀 Execute Top GARCH Signal" if live_mode else "🧪 Dry Run Top Signal",
+                use_container_width=True,
+                type="primary",
+            )
+
+            if trade_btn:
+                with st.status(
+                    "🔴 PLACING LIVE ORDER..." if live_mode else "🧪 Running dry simulation...",
+                    expanded=True
+                ) as status:
+                    result = execute_top_trade(budget=bt_capital, dry_run=not live_mode)
+                    if result.get("success"):
+                        pick = result.get("pick", {})
+                        if live_mode:
+                            status.update(label="✅ Order placed!", state="complete")
+                            st.balloons()
+                        else:
+                            status.update(label="✅ Dry run complete", state="complete")
+
+                        if pick:
+                            st.markdown(f"""
+                            <div class="metric-card signal-buy" style="padding:20px;">
+                                <div style="font-size:1.3em; font-weight:700; color:#00ff88;">
+                                    {'🔴 LIVE ORDER' if live_mode else '🧪 DRY RUN'}: {pick['ticker']} ${pick['strike']} Straddle
+                                </div>
+                                <div style="margin-top:10px; color:#ccc;">
+                                    {pick['contracts']}x contracts • Expiry: {pick['expiry']}<br>
+                                    Call: ${pick['call_price']:.2f} + Put: ${pick['put_price']:.2f} = <b>${pick['total_cost']:.2f}</b><br>
+                                    GARCH spread: +{pick['spread']*100:.1f}%
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
                     else:
-                        st.error("Token verification timed out. Try again.")
+                        status.update(label="❌ No signal or error", state="error")
+                        st.error(f"Reason: {result.get('reason', 'unknown')}")
 
-        with act_col2:
-            live_mode = st.checkbox("Enable LIVE mode", value=False,
-                                     help="⚠️ When enabled, orders will be placed with real money!")
+    # ═══ STRANGLE SCANNER TAB ═════════════════════════════════════════
+    with landing_tab3:
+        st.markdown("---")
+        st.markdown(f"## 🔀 Top 8 Strangle Opportunities — {STRANGLE_OTM_WIDTH*100:.0f}% OTM")
+        sg_col1, sg_col2 = st.columns([3, 1])
+        with sg_col2:
+            sg_btn = st.button("🔄 Refresh Strangle Scan", use_container_width=True, type="primary")
+
+        if sg_btn or "strangle_scan_results" not in st.session_state:
+            with st.status(f"Scanning 42 tickers for strangles — {STRANGLE_OTM_WIDTH*100:.0f}% OTM...", expanded=True) as status:
+                st.write("Fitting GARCH and finding OTM call/put pairs...")
+                from signals.strangle_scanner import scan_strangle_opportunities
+                sg_recs = scan_strangle_opportunities(budget=bt_capital, top_n=8)
+                st.session_state["strangle_scan_results"] = sg_recs
+                status.update(label=f"Scan complete — {len(sg_recs)} strangle opportunities!", state="complete")
+
+        sg_recs = st.session_state.get("strangle_scan_results", [])
+        if sg_recs:
+            for i, r in enumerate(sg_recs):
+                spread_pct = r['spread'] * 100
+                signal_color = "#00cc66" if spread_pct > 10 else "#FFD93D" if spread_pct > 5 else "#ff8844"
+                st.markdown(f"""
+                <div class="metric-card" style="padding:15px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                    <div style="min-width:50px; text-align:center;">
+                        <span style="font-size:1.5em; font-weight:700; color:{signal_color};">#{i+1}</span>
+                    </div>
+                    <div style="min-width:80px;">
+                        <div style="font-size:1.3em; font-weight:700; color:#e0e0ff;">{r['ticker']}</div>
+                        <div style="color:#888; font-size:0.85em;">${r['spot']:.2f}</div>
+                    </div>
+                    <div style="flex:1; min-width:220px;">
+                        <div style="color:#aaa;">
+                            <b>${r['call_strike']}C / ${r['put_strike']}P Strangle</b> — {r['expiry']}
+                        </div>
+                        <div style="color:#888; font-size:0.85em;">
+                            {r['contracts']}x @ ${r['call_price']:.2f}C + ${r['put_price']:.2f}P = <b>${r['total_cost']:.2f}</b>
+                        </div>
+                    </div>
+                    <div style="min-width:100px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">GARCH RV</div>
+                        <div style="color:#e0e0ff; font-weight:600;">{r['garch_rv']:.1%}</div>
+                    </div>
+                    <div style="min-width:100px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">30d Hist Vol</div>
+                        <div style="color:#e0e0ff; font-weight:600;">{r['hist_vol']:.1%}</div>
+                    </div>
+                    <div style="min-width:140px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">RV-HV Spread</div>
+                        <div style="font-size:1.2em; font-weight:700; color:{signal_color};">+{spread_pct:.1f}%</div>
+                    </div>
+                    <div style="min-width:120px; text-align:center;">
+                        <div style="font-size:0.8em; color:#888;">Liquidity</div>
+                        <div style="color:#ccc;">{r['liquidity']:,} vol</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No strangle opportunities found within budget. Click Refresh to scan.")
+
+        st.markdown("---")
+        st.markdown(f"""
+        <div class="metric-card" style="padding:16px;">
+            <p style="margin:0; color:#aaa; font-size:0.9em;">
+                <b>Strangle vs Straddle:</b> Strangles use OTM call + OTM put ({STRANGLE_OTM_WIDTH*100:.0f}% from spot),
+                resulting in <b>lower premiums</b> but requiring a <b>bigger move</b> to profit.
+                Both strategies use the same GARCH signal (forecast RV vs 30d historical vol).
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ═══ METHODOLOGY TAB ════════════════════════════════════════════
+    with landing_tab2:
+        st.markdown("""
+        <div class="metric-card" style="padding:30px; text-align:center; margin-bottom:24px;">
+            <h2 style="margin:0; font-size:1.8em;">How Securities Are Scanned & Selected</h2>
+            <p style="color:#aaa; margin:8px 0 0 0; font-size:1em;">
+                GARCH Volatility Forecasting · Long Straddle Strategy · Defined Risk
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Section 1: Core Model ──
+        st.markdown("### 1 · The Core Volatility Forecasting Model (GARCH)")
+        st.markdown("""
+        At the heart of the scanner is a **GARCH-family volatility forecasting engine** that
+        models daily stock returns to predict future realized volatility.
+        """)
+
+        garch_col1, garch_col2 = st.columns(2)
+        with garch_col1:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px;">
+                <h4 style="margin-top:0; color:#6C63FF;">Symmetric GARCH(1,1)</h4>
+                <code style="color:#e0e0ff; font-size:0.95em;">σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}</code>
+                <ul style="color:#ccc; margin-top:12px; font-size:0.9em;">
+                    <li><b>ω</b> — long-run variance constant</li>
+                    <li><b>α</b> — ARCH coeff (shock reaction)</li>
+                    <li><b>β</b> — GARCH coeff (persistence)</li>
+                    <li>Stationarity: α + β &lt; 1</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        with garch_col2:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px;">
+                <h4 style="margin-top:0; color:#FF6B6B;">Asymmetric GJR-GARCH(1,1,1)</h4>
+                <code style="color:#e0e0ff; font-size:0.95em;">σ²_t = ω + (α + γ·I)·ε²_{t-1} + β·σ²_{t-1}</code>
+                <ul style="color:#ccc; margin-top:12px; font-size:0.9em;">
+                    <li><b>γ</b> — leverage parameter (asymmetry)</li>
+                    <li><b>I</b> = 1 if ε_{t-1} &lt; 0, else 0</li>
+                    <li>Captures <b>leverage effect</b>: negative returns<br>increase vol more than positive returns</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("""
+        Both models are fitted to the stock's full price history. The model with the **lower
+        Akaike Information Criterion (AIC)** is automatically selected. GJR-GARCH is chosen
+        ~70% of the time, confirming that leverage effects are present in most equity returns.
+        Returns are modeled with a **Student-t distribution** to capture the fat tails observed
+        in financial markets.
+        """)
+
+        st.markdown("""    
+        | Parameter | Value | Rationale |
+        |---|---|---|
+        | p (GARCH lag) | 1 | Standard; higher orders rarely improve fit |
+        | q (ARCH lag) | 1 | Captures immediate shock reaction |
+        | o (Leverage lag) | 1 | One asymmetric term for leverage effect |
+        | Distribution | Student-t | Fat tails in equity returns |
+        | Return scaling | ×100 | Numerical stability for MLE optimizer |
+        | Trading days | 252 | Standard US market annualization |
+        """)
 
         st.markdown("---")
 
-        trade_btn = st.button(
-            "🚀 Execute Top GARCH Signal" if live_mode else "🧪 Dry Run Top Signal",
-            use_container_width=True,
-            type="primary",
-        )
+        # ── Section 2: Signal Methodology ──
+        st.markdown("### 2 · Signal Methodology — The 30-Day Realization Benchmark")
+        st.markdown("""
+        The strategy identifies underpriced options by comparing **forecasted future volatility**
+        with recent historical trends:
+        """)
 
-        if trade_btn:
-            with st.status(
-                "🔴 PLACING LIVE ORDER..." if live_mode else "🧪 Running dry simulation...",
-                expanded=True
-            ) as status:
-                result = execute_top_trade(budget=bt_capital, dry_run=not live_mode)
-                if result.get("success"):
-                    pick = result.get("pick", {})
-                    if live_mode:
-                        status.update(label="✅ Order placed!", state="complete")
-                        st.balloons()
-                    else:
-                        status.update(label="✅ Dry run complete", state="complete")
+        st.markdown("""
+        <div class="metric-card" style="padding:20px; text-align:center;">
+            <div style="font-size:1.3em; font-weight:600; color:#e0e0ff; margin-bottom:8px;">
+                Spread = GARCH Forecast RV − 30-Day Rolling Close-to-Close Historical Volatility
+            </div>
+            <div style="color:#aaa; font-size:0.9em;">
+                A <span style="color:#00cc66; font-weight:600;">positive spread</span> means GARCH
+                forecasts volatility expansion above recent history → options are <b>underpriced</b> → BUY VOL
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-                    if pick:
-                        st.markdown(f"""
-                        <div class="metric-card signal-buy" style="padding:20px;">
-                            <div style="font-size:1.3em; font-weight:700; color:#00ff88;">
-                                {'🔴 LIVE ORDER' if live_mode else '🧪 DRY RUN'}: {pick['ticker']} ${pick['strike']} Straddle
-                            </div>
-                            <div style="margin-top:10px; color:#ccc;">
-                                {pick['contracts']}x contracts • Expiry: {pick['expiry']}<br>
-                                Call: ${pick['call_price']:.2f} + Put: ${pick['put_price']:.2f} = <b>${pick['total_cost']:.2f}</b><br>
-                                GARCH spread: +{pick['spread']*100:.1f}%
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    status.update(label="❌ No signal or error", state="error")
-                    st.error(f"Reason: {result.get('reason', 'unknown')}")
+        st.markdown("""
+        **Why 30-day close-to-close realized vol?** In head-to-head backtesting, this benchmark
+        significantly outperformed option IV proxies like the Garman-Klass OHLC estimator:
+
+        | Benchmark | Backtest Return | Period |
+        |---|---|---|
+        | **30-day close-to-close HV** | **+1,247%** | 43 sequential 5-day trades |
+        | Garman-Klass OHLC IV proxy | +736% | Same period |
+
+        The 30-day rolling window provides a stable, noise-resistant measure of the market's
+        recent realized volatility that the GARCH forecast can be meaningfully compared against.
+        """)
+
+        st.markdown("---")
+
+        # ── Section 3: Universe Selection ──
+        st.markdown("### 3 · Universe Selection — 42 Budget-Friendly Tickers")
+        st.markdown("""
+        The scanner targets a pre-defined universe of **42 highly liquid, high-beta, budget-friendly
+        tickers** — stocks priced roughly $1–$30 where ATM straddles fit comfortably within
+        tight capital limits.
+        """)
+
+        # Show the universe in a styled grid
+        from signals.scanner import SCAN_UNIVERSE
+        universe_rows = [SCAN_UNIVERSE[i:i+8] for i in range(0, len(SCAN_UNIVERSE), 8)]
+        universe_html = '<div class="metric-card" style="padding:20px;"><div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">'
+        for sym in SCAN_UNIVERSE:
+            universe_html += f'<span style="background:rgba(108,99,255,0.2); border:1px solid rgba(108,99,255,0.3); border-radius:6px; padding:4px 12px; color:#e0e0ff; font-size:0.85em; font-weight:500;">{sym}</span>'
+        universe_html += '</div></div>'
+        st.markdown(universe_html, unsafe_allow_html=True)
+
+        st.markdown("""
+        **Why these tickers?** By prioritizing lower-priced, high-volatility stocks, the system
+        ensures that multi-leg option packages (call + put straddles) can fit within tight capital
+        limits. These names also tend to have active options markets with reasonable liquidity.
+        """)
+
+        st.markdown("---")
+
+        # ── Section 4: Strike & Expiry ──
+        st.markdown("### 4 · Option Strike & Expiry Selection")
+
+        exp_col1, exp_col2 = st.columns(2)
+        with exp_col1:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px; text-align:center;">
+                <div style="font-size:0.8em; color:#888; text-transform:uppercase; letter-spacing:1px;">Target Expiry</div>
+                <div style="font-size:2em; font-weight:700; color:#FFD93D; margin:8px 0;">~14 Days</div>
+                <div style="color:#aaa; font-size:0.85em;">Selects the available expiration closest to now + 14 days for high-gamma, short-term exposure</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with exp_col2:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px; text-align:center;">
+                <div style="font-size:0.8em; color:#888; text-transform:uppercase; letter-spacing:1px;">Strike Selection</div>
+                <div style="font-size:2em; font-weight:700; color:#6C63FF; margin:8px 0;">ATM ± 1</div>
+                <div style="color:#aaa; font-size:0.85em;">Checks ATM and both adjacent strikes (3 candidates per ticker) to find the most cost-efficient entry</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ── Section 5: Cost & Liquidity Filters ──
+        st.markdown("### 5 · Cost, Budget & Liquidity Constraints")
+        st.markdown("""
+        Before any security is selected, it must pass strict risk and execution filters:
+        """)
+
+        st.markdown("""
+        <div class="metric-card" style="padding:20px;">
+            <div style="display:flex; flex-wrap:wrap; gap:24px; justify-content:space-around;">
+                <div style="text-align:center; min-width:160px;">
+                    <div style="font-size:0.75em; color:#888; text-transform:uppercase; letter-spacing:1px;">Budget Limit</div>
+                    <div style="font-size:1.8em; font-weight:700; color:#FF6B6B;">$150</div>
+                    <div style="color:#aaa; font-size:0.8em;">Hard cap per trade</div>
+                </div>
+                <div style="text-align:center; min-width:160px;">
+                    <div style="font-size:0.75em; color:#888; text-transform:uppercase; letter-spacing:1px;">Transaction Fee</div>
+                    <div style="font-size:1.8em; font-weight:700; color:#FFD93D;">$1.30</div>
+                    <div style="color:#aaa; font-size:0.8em;">Per straddle (Webull)</div>
+                </div>
+                <div style="text-align:center; min-width:160px;">
+                    <div style="font-size:0.75em; color:#888; text-transform:uppercase; letter-spacing:1px;">Min Price Filter</div>
+                    <div style="font-size:1.8em; font-weight:700; color:#00cc66;">$0.03</div>
+                    <div style="color:#aaa; font-size:0.8em;">Per leg (excludes pennies)</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        **Straddle cost formula:**
+        ```
+        Straddle Cost = (Call Price + Put Price) × 100 + $1.30 fee
+        ```
+
+        **Liquidity filter:** The scanner tracks current trading volume for both the call and
+        put legs. Contracts with zero or negligible volume are excluded to ensure high fill
+        rates and narrow bid-ask spreads.
+
+        **Pricing source:** Uses actual `lastPrice` from the live options chain (or bid-ask
+        midpoint if the market is closed). This is *not* synthetic pricing — the scanner works
+        with real market data.
+        """)
+
+        st.markdown("---")
+
+        # ── Section 6: Ranking & Selection ──
+        st.markdown("### 6 · Ranking & Final Selection")
+
+        st.markdown("""
+        <div class="metric-card" style="padding:24px;">
+            <h4 style="margin-top:0; color:#e0e0ff;">Selection Pipeline (per scan)</h4>
+            <ol style="color:#ccc; line-height:2em; font-size:0.95em;">
+                <li>Fetch <b>live options chain</b> from Yahoo Finance for each of 42 tickers</li>
+                <li>Find the nearest expiration <b>~14 days out</b></li>
+                <li>Try ATM and <b>±1 strikes</b> (3 candidates per ticker)</li>
+                <li>Compute straddle cost — must fit within the <b>$150 budget</b></li>
+                <li>Fit <b>GARCH</b> on full price history → extract conditional volatility forecast</li>
+                <li>Compute <b>30-day rolling close-to-close historical vol</b> (annualized)</li>
+                <li>Compute spread: <code style="color:#6C63FF;">GARCH_RV − 30d_hist_vol</code></li>
+                <li>Filter: only <b>positive spread</b> candidates (GARCH predicts vol expansion)</li>
+                <li>Sort all candidates by spread — <b>strongest signal first</b></li>
+                <li>Return <b>Top 8</b> recommendations</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ── Section 7: Role of the Transformer ──
+        st.markdown("### 7 · The Transformer Model — Interpretability Only")
+        st.markdown("""
+        A PyTorch **Transformer encoder** is trained alongside GARCH to provide
+        feature-level interpretability. It does **not** generate signals or influence
+        trade decisions.
+
+        | Component | Role |
+        |---|---|
+        | **GARCH** | **Decision engine** — forecasts vol and generates all buy/sell signals |
+        | **Transformer** | **Interpretability** — identifies which of 21 features drive volatility |
+
+        The 21 input features span price returns, realized volatility (5/10/21-day), volume,
+        technicals (RSI, MACD, Bollinger, ATR), market regime (VIX), options data (P/C ratio,
+        avg IV), and macro (10Y Treasury yield). Feature importance is extracted via:
+
+        1. **Gradient saliency** — |∂output/∂input| averaged across test samples
+        2. **Attention weights** — averaged across heads and layers for temporal importance
+
+        > ⚠️ The Transformer is displayed in the *Feature Importance* tab after running an
+        > analysis. It helps you understand *why* volatility is elevated, but it never
+        > overrides the GARCH signal.
+        """)
+
+        st.markdown("---")
+
+        # ── Section 8: Risk Management ──
+        st.markdown("### 8 · Risk Management & Execution")
+
+        risk_col1, risk_col2 = st.columns(2)
+        with risk_col1:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px;">
+                <h4 style="margin-top:0; color:#00cc66;">Defined Risk</h4>
+                <ul style="color:#ccc; font-size:0.9em; line-height:1.8em;">
+                    <li><b>Max loss = premium paid</b> (no naked options)</li>
+                    <li>Budget capped at <b>$150</b> per trade</li>
+                    <li>Max position size: <b>90%</b> of capital</li>
+                    <li>Single best signal executed (max conviction)</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        with risk_col2:
+            st.markdown("""
+            <div class="metric-card" style="padding:20px;">
+                <h4 style="margin-top:0; color:#FF6B6B;">Auto-Close Daemon</h4>
+                <ul style="color:#ccc; font-size:0.9em; line-height:1.8em;">
+                    <li><b>+12%</b> take-profit → auto-sell both legs</li>
+                    <li><b>-30%</b> stop-loss → auto-sell to cap losses</li>
+                    <li>Market hours: polls every <b>30 seconds</b></li>
+                    <li>Off-hours: polls every <b>5 minutes</b></li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ── Disclaimer ──
+        st.markdown("""
+        <div class="metric-card" style="padding:20px; border-color:rgba(255,200,50,0.3);">
+            <p style="color:#FFD93D; font-weight:600; margin-top:0;">⚠️ Disclaimer</p>
+            <p style="color:#aaa; font-size:0.85em; margin-bottom:0;">
+                This is a research and educational tool. It does not constitute financial advice.
+                Backtested results use Black-Scholes synthetic pricing (historical options data is not
+                freely available). Live scanning uses real market prices from the options chain, but
+                actual results may differ due to bid-ask spreads, slippage, and liquidity conditions.
+                Past performance does not guarantee future results.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 

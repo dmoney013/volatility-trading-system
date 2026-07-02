@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Label: unique identifier for this agent -->
+    <key>Label</key>
+    <string>com.qt.trading.daemon</string>
+
+    <!-- Program to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/devongobay/qt/broker/launch_daemon.sh</string>
+    </array>
+
+    <!-- Run at 9:26 AM every weekday (1 min after scheduled wake) -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <!-- Monday -->
+        <dict>
+            <key>Weekday</key><integer>1</integer>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>26</integer>
+        </dict>
+        <!-- Tuesday -->
+        <dict>
+            <key>Weekday</key><integer>2</integer>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>26</integer>
+        </dict>
+        <!-- Wednesday -->
+        <dict>
+            <key>Weekday</key><integer>3</integer>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>26</integer>
+        </dict>
+        <!-- Thursday -->
+        <dict>
+            <key>Weekday</key><integer>4</integer>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>26</integer>
+        </dict>
+        <!-- Friday -->
+        <dict>
+            <key>Weekday</key><integer>5</integer>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>26</integer>
+        </dict>
+    </array>
+
+    <!-- Log output -->
+    <key>StandardOutPath</key>
+    <string>/Users/devongobay/qt/cache/launchd_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/devongobay/qt/cache/launchd_stderr.log</string>
+
+    <!-- Run even if user not logged in at the console -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
