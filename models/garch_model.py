@@ -262,6 +262,85 @@ class GARCHVolatilityModel:
             'expected_move_dollars': round(move_dollars, 2),
         }
 
+
+    def compute_bias_correction(
+        self,
+        prices: pd.DataFrame,
+        window: int = 30,
+        min_windows: int = 6,
+    ) -> float:
+        """
+        Walk-forward calibration of GARCH's vol overestimation.
+
+        Steps through non-overlapping 30-day windows over the last ~360 days:
+          1. Fit GARCH on all data up to day T
+          2. Extract conditional vol forecast (annualized)
+          3. Measure actual realized vol over the next 30 days
+          4. Record ratio: actual / predicted
+
+        Returns:
+            Correction factor = median(actual / predicted).
+            Typically 0.70-0.80, meaning GARCH overestimates by 20-30%.
+            Clamped to [0.50, 1.0] for safety.
+        """
+        close = prices['Close']
+        if len(close) < GARCH_FIT_WINDOW + window * min_windows:
+            # Not enough data for calibration — return 1.0 (no correction)
+            self.bias_correction = 1.0
+            return 1.0
+
+        log_ret = np.log(close / close.shift(1)).dropna()
+        ratios = []
+
+        # Step through non-overlapping windows in the last ~360 days
+        # Leave the last 30 days untouched (that's the current forecast)
+        cal_end = len(close) - window  # Don't use most recent window
+        cal_start = max(GARCH_FIT_WINDOW, cal_end - window * 12)  # ~12 windows
+
+        for t in range(cal_start, cal_end, window):
+            try:
+                # Fit GARCH on data up to day T
+                fit_prices = prices.iloc[:t].copy()
+                if len(fit_prices) < GARCH_FIT_WINDOW:
+                    continue
+
+                temp_garch = GARCHVolatilityModel()
+                temp_garch.fit(fit_prices, verbose=False)
+                predicted_vol = temp_garch.get_conditional_volatility().iloc[-1]
+
+                if predicted_vol <= 0 or np.isnan(predicted_vol):
+                    continue
+
+                # Measure actual realized vol over next 30 days
+                fwd_rets = log_ret.iloc[t:t + window]
+                if len(fwd_rets) < window * 0.8:  # Need at least 80% of window
+                    continue
+                actual_vol = fwd_rets.std() * np.sqrt(TRADING_DAYS)
+
+                if actual_vol > 0:
+                    ratios.append(actual_vol / predicted_vol)
+            except Exception:
+                continue
+
+        if len(ratios) >= min_windows:
+            raw_factor = float(np.median(ratios))
+            # Clamp to [0.50, 1.0] — don't over-correct or amplify
+            self.bias_correction = max(0.50, min(1.0, raw_factor))
+        else:
+            self.bias_correction = 1.0  # Not enough data
+
+        return self.bias_correction
+
+    def get_corrected_conditional_volatility(self) -> pd.Series:
+        """
+        Return conditional volatility adjusted by the bias correction factor.
+
+        Must call compute_bias_correction() first, otherwise returns
+        uncorrected values.
+        """
+        factor = getattr(self, 'bias_correction', 1.0)
+        return self.conditional_vol * factor
+
     def rolling_forecast(
         self,
         window: int = 504,  # ~2 years

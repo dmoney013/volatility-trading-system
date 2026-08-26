@@ -220,7 +220,7 @@ Examples:
             print("  GARCH STRADDLE SCANNER — signals/scanner.py")
             print("  Compares GARCH forecast RV against actual option IV")
             print("═" * 60 + "\n")
-            recs = scan_for_opportunities(budget=INITIAL_CAPITAL, top_n=8)
+            recs, _ = scan_for_opportunities(budget=INITIAL_CAPITAL, top_n=8)
             if recs:
                 print(f"{'#':<4} {'Ticker':<8} {'Strike':<8} {'Expiry':<12} {'GARCH RV':<10} {'Opt IV':<10} {'Spread':<10} {'Cost':<10} {'Liq':<8}")
                 print("─" * 80)

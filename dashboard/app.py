@@ -830,7 +830,7 @@ else:
                 with st.status("Scanning 42 tickers — GARCH RV vs 30d historical vol...", expanded=True) as status:
                     st.write("Fitting GARCH on each ticker & comparing forecast RV against 30-day rolling historical volatility...")
                     from signals.scanner import scan_for_opportunities
-                    recs = scan_for_opportunities(budget=bt_capital, top_n=8)
+                    recs, _ = scan_for_opportunities(budget=bt_capital, top_n=8)
                     st.session_state["scan_results"] = recs
                     status.update(label=f"Scan complete — {len(recs)} opportunities found!", state="complete")
 

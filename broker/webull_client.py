@@ -660,7 +660,7 @@ def execute_top_trade(budget=150.0, dry_run=True):
 
     # Step 1: Scan
     print("\n📡 Scanning for opportunities...")
-    recs = scan_for_opportunities(budget=budget, top_n=1)
+    recs, _ = scan_for_opportunities(budget=budget, top_n=1)
     if not recs:
         print("❌ No opportunities found.")
         return {"success": False, "reason": "no_signal"}

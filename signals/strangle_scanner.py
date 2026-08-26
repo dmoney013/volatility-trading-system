@@ -28,7 +28,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.garch_model import GARCHVolatilityModel
 from data.fetcher import fetch_price_data
-from config import TRADING_DAYS, STRANGLE_OTM_WIDTH, MIN_MARGIN_THRESHOLD, IV_RANK_MAX, MAX_TOP_PICKS, REJECT_DAMPENED, REALIZED_VS_PREDICTED_MIN, MAX_STRANGLE_SPREAD_PCT, MIN_EXPIRY_TRADING_DAYS
+from config import TRADING_DAYS, STRANGLE_OTM_WIDTH, MIN_MARGIN_THRESHOLD, IV_RANK_MAX, MAX_TOP_PICKS, REJECT_DAMPENED, REALIZED_VS_PREDICTED_MIN, MAX_STRANGLE_SPREAD_PCT, MIN_EXPIRY_TRADING_DAYS, VOL_MEAN_REVERSION_MAX, MIN_BE_FEASIBILITY
 from signals.scanner import SCAN_UNIVERSE
 
 # ─── Liquidity Cache Path ───────────────────────────────────────
@@ -167,6 +167,8 @@ def scan_strangle_opportunities(budget=150.0, top_n=None, otm_width=STRANGLE_OTM
         'stale_signal': [],
         'low_margin': [],
         'negative_signal': [],
+        'vol_mean_reversion': [],
+        'low_feasibility': [],
         'error': [],
     }
 
@@ -288,6 +290,9 @@ def scan_strangle_opportunities(budget=150.0, top_n=None, otm_width=STRANGLE_OTM
             garch = GARCHVolatilityModel()
             garch.fit(prices, verbose=False)
 
+            # v4: Apply bias correction — GARCH overestimates by ~25%
+            bias_factor = garch.compute_bias_correction(prices)
+
             # Days to expiry = trading days between now and expiry
             exp_date = datetime.strptime(best_exp, '%Y-%m-%d')
             calendar_days = (exp_date - datetime.now()).days
@@ -297,7 +302,21 @@ def scan_strangle_opportunities(budget=150.0, top_n=None, otm_width=STRANGLE_OTM
             price_range = garch.forecast_price_range(
                 spot, horizon_days=holding_days)
 
-            garch_rv = garch.get_conditional_volatility().iloc[-1]
+            garch_rv = garch.get_corrected_conditional_volatility().iloc[-1]
+
+            # ─── GARCH Spread Filter (Bug 4 fix) ─────────────────
+            # Reject if GARCH conditional vol < 30-day historical vol.
+            # This means volatility is COMPRESSING, not expanding —
+            # buying vol in a compression regime is how GME lost $1,582.
+            log_ret = np.log(prices['Close'] / prices['Close'].shift(1))
+            hist_vol_30d = log_ret.rolling(30).std().iloc[-1] * np.sqrt(TRADING_DAYS)
+            if not np.isnan(hist_vol_30d):
+                garch_spread = garch_rv - hist_vol_30d
+                if garch_spread <= 0:
+                    rejections['negative_signal'].append(
+                        f"{sym} (GARCH spread {garch_spread:+.1%}, "
+                        f"vol compressing)")
+                    continue
 
             # Real breakeven prices for the strangle
             premium = c_price + p_price  # total debit per share
@@ -353,6 +372,37 @@ def scan_strangle_opportunities(budget=150.0, top_n=None, otm_width=STRANGLE_OTM
                 rejections['stale_signal'].append(
                     f"{sym} (realized {realized_5d_move:.1f}% vs predicted {predicted_move:.1f}%, "
                     f"ratio {realized_5d_move/predicted_move:.2f} < {REALIZED_VS_PREDICTED_MIN})")
+                continue
+
+            # ─── v4 Filter: Vol Mean-Reversion ──────────────────
+            # When HV30 >> HV90, short-term vol is elevated above
+            # long-term average and will likely compress.
+            # Buying vol here = buying at the peak.
+            all_rets = prices['Close'].pct_change().dropna()
+            if len(all_rets) >= 90:
+                hv90 = all_rets.iloc[-90:].std() * np.sqrt(TRADING_DAYS)
+                if hv90 > 0:
+                    vol_ratio = hist_vol_30d / hv90
+                    if vol_ratio > VOL_MEAN_REVERSION_MAX:
+                        rejections['vol_mean_reversion'].append(
+                            f"{sym} (HV30/HV90 = {vol_ratio:.2f} > "
+                            f"{VOL_MEAN_REVERSION_MAX}, vol likely to compress)")
+                        continue
+
+            # ─── v4 Filter: Breakeven Feasibility ───────────────
+            # What % of historical N-day windows achieved a move
+            # >= breakeven? If < 25%, the stock rarely moves enough.
+            close_series = prices['Close']
+            n_day_moves = (close_series.pct_change(holding_days).dropna().abs())
+            be_move_pct = max(
+                abs(breakeven_up / spot - 1),
+                abs(1 - breakeven_down / spot)
+            )
+            feasibility = (n_day_moves >= be_move_pct).mean()
+            if feasibility < MIN_BE_FEASIBILITY:
+                rejections['low_feasibility'].append(
+                    f"{sym} (only {feasibility:.0%} of {holding_days}d windows "
+                    f"achieved ±{be_move_pct:.1%} move, need {MIN_BE_FEASIBILITY:.0%})")
                 continue
 
             # ─── v3 Fix 5: Earnings Catalyst Flag ───────────────

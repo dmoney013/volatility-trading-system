@@ -635,6 +635,130 @@ def open_strangle(ticker, call_strike, put_strike, expiry, budget=150.0, dry_run
     return trade_info
 
 
+# ─── Directional (Single-Leg) Order ────────────────────────────
+
+def open_directional(ticker, strike, expiry, option_type="CALL",
+                     budget=150.0, dry_run=False):
+    """
+    Open a single-leg directional CALL or PUT at market open.
+
+    Used by the Hybrid Index-Beta scanner for translated directional
+    signals (e.g., "SPY bullish → XPEV $13 CALL").
+
+    Args:
+        ticker: Underlying symbol (e.g., "XPEV")
+        strike: Strike price (e.g., 13)
+        expiry: Expiration date "YYYY-MM-DD"
+        option_type: "CALL" or "PUT"
+        budget: Max spend
+        dry_run: If True, simulate without placing real orders
+
+    Returns dict with trade details or None on failure.
+    """
+    option_type = option_type.upper()
+    if option_type not in ("CALL", "PUT"):
+        log.error(f"❌ Invalid option_type '{option_type}'. Must be CALL or PUT.")
+        return None
+
+    log.info(f"\n{'='*60}")
+    log.info(f"📈 OPENING DIRECTIONAL {option_type}: {ticker} ${strike} exp {expiry}")
+    log.info(f"   Budget: ${budget:.2f} | Mode: {'DRY RUN' if dry_run else '🔴 LIVE'}")
+    log.info(f"{'='*60}")
+
+    # Fetch fresh quotes (reuse straddle quote fetcher — gives both legs)
+    log.info("📡 Fetching fresh option quotes...")
+    quotes = fetch_fresh_option_quotes(ticker, float(strike), expiry)
+    if not quotes:
+        log.error("❌ Could not fetch option quotes. Aborting.")
+        return None
+
+    # Pick the relevant leg
+    if option_type == "CALL":
+        price = quotes['call_price']
+        bid, ask = quotes['call_bid'], quotes['call_ask']
+    else:
+        price = quotes['put_price']
+        bid, ask = quotes['put_bid'], quotes['put_ask']
+
+    source = quotes.get('source', 'unknown')
+    log.info(f"   {option_type}: ${price:.2f} (bid ${bid:.2f} / ask ${ask:.2f}) [{source}]")
+
+    if price < 0.01:
+        log.error(f"❌ {option_type} price ${price:.2f} is too low. Aborting.")
+        return None
+
+    contracts = max(1, int((budget - 0.65) / (price * 100)))
+    total_cost = price * 100 * contracts + 0.65  # single-leg commission
+    log.info(f"   {option_type}: ${price:.2f}/share × {contracts} contract(s)")
+    log.info(f"   Total cost: ${total_cost:.2f}")
+
+    if total_cost > budget:
+        log.error(f"❌ Cost ${total_cost:.2f} exceeds budget ${budget:.2f}. Aborting.")
+        return None
+
+    if dry_run:
+        log.info(f"🧪 DRY RUN — would buy {contracts}x {ticker} ${strike} {option_type} "
+                 f"for ${total_cost:.2f}")
+        trade_info = {
+            "ticker": ticker,
+            "strategy": "directional",
+            "option_type": option_type,
+            "strike": float(strike),
+            "expiry": expiry,
+            "contracts": contracts,
+            "price": price,
+            "total_cost": total_cost,
+            "opened_at": datetime.now(timezone.utc).isoformat(),
+            "mode": "dry_run",
+        }
+        _save_active_trade(trade_info)
+        return trade_info
+
+    # Live execution
+    if not ensure_token():
+        return None
+
+    account_id = get_account_id()
+    if not account_id:
+        log.error("❌ Could not retrieve account. Aborting.")
+        return None
+
+    log.info(f"💰 PLACING LIVE {option_type} ORDER...")
+    from broker.webull_client import place_option_order
+
+    result = place_option_order(
+        account_id=account_id,
+        symbol=ticker,
+        strike=f"{float(strike):.2f}",
+        expiry=expiry,
+        option_type=option_type,
+        side="BUY",
+        quantity=contracts,
+        limit_price=f"{price:.2f}",
+    )
+
+    if not result["success"]:
+        log.error(f"❌ Order failed: {result.get('error', 'unknown')}")
+        return None
+
+    log.info(f"✅ {option_type} OPENED! {ticker} ${strike} × {contracts} for ${total_cost:.2f}")
+    trade_info = {
+        "ticker": ticker,
+        "strategy": "directional",
+        "option_type": option_type,
+        "strike": float(strike),
+        "expiry": expiry,
+        "contracts": contracts,
+        "price": price,
+        "total_cost": total_cost,
+        "opened_at": datetime.now(timezone.utc).isoformat(),
+        "mode": "live",
+        "order": str(result),
+    }
+    _save_active_trade(trade_info)
+    return trade_info
+
+
 # ─── Phase 2: Monitor & Auto-Close ─────────────────────────────
 
 def refresh_and_close(account_id, straddle_data, ticker, strike, expiry):
@@ -854,6 +978,11 @@ def main():
                         help="Disable stop-loss auto-close (only close on take-profit)")
     parser.add_argument("--trade-file", type=str, default=None,
                         help="Custom path for active trade state file (enables multiple daemons)")
+    parser.add_argument("--directional", action="store_true",
+                        help="Open a single-leg directional CALL or PUT (for Hybrid scanner)")
+    parser.add_argument("--option-type", type=str, default="CALL",
+                        choices=["CALL", "PUT"],
+                        help="Option type for directional mode (default: CALL)")
 
     args = parser.parse_args()
 
@@ -863,14 +992,23 @@ def main():
         ACTIVE_TRADE_FILE = args.trade_file
         log.info(f"   Trade file: {ACTIVE_TRADE_FILE}")
 
-    # Detect strangle mode
+    # Detect strategy mode
+    is_directional = getattr(args, 'directional', False)
     is_strangle = args.call_strike is not None and args.put_strike is not None
-    strategy_name = "STRANGLE" if is_strangle else "STRADDLE"
+    if is_directional:
+        strategy_name = f"DIRECTIONAL {args.option_type}"
+    elif is_strangle:
+        strategy_name = "STRANGLE"
+    else:
+        strategy_name = "STRADDLE"
 
     log.info("=" * 60)
     log.info(f"🤖 AUTONOMOUS {strategy_name} TRADER")
     log.info(f"   Ticker:  {args.ticker}")
-    if is_strangle:
+    if is_directional:
+        log.info(f"   Strike:  ${args.strike}")
+        log.info(f"   Type:    {args.option_type}")
+    elif is_strangle:
         log.info(f"   Call:    ${args.call_strike}")
         log.info(f"   Put:     ${args.put_strike}")
     else:
@@ -938,7 +1076,7 @@ def main():
 
                 # Run both scanners
                 strangle_results, strangle_rej = scan_strangle_opportunities(budget=args.budget)
-                straddle_results = scan_for_opportunities(budget=args.budget)
+                straddle_results, straddle_rej2 = scan_for_opportunities(budget=args.budget)
 
                 # Normalize and merge results with strategy tag
                 all_candidates = []
@@ -1052,7 +1190,16 @@ def main():
 
         else:
             # Non-auto-scan: use CLI-specified ticker/strikes
-            if is_strangle:
+            if is_directional:
+                trade = open_directional(
+                    ticker=args.ticker,
+                    strike=args.strike,
+                    expiry=args.expiry,
+                    option_type=args.option_type,
+                    budget=args.budget,
+                    dry_run=args.dry_run,
+                )
+            elif is_strangle:
                 trade = open_strangle(
                     ticker=args.ticker,
                     call_strike=args.call_strike,

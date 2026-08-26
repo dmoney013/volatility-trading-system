@@ -23,7 +23,7 @@ TREASURY_TICKER = "^TNX"  # 10-Year Treasury Yield
 
 # ─── Data Parameters ────────────────────────────────────────────────
 DATA_START_DATE = "2022-01-01"
-DATA_END_DATE = datetime.now().strftime("%Y-%m-%d")
+DATA_END_DATE = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 CACHE_DIR = "cache"
 
 # ─── GARCH Parameters ───────────────────────────────────────────────
@@ -47,7 +47,7 @@ GARCH_CALIBRATION_SCALE = 1.3   # Scale predicted range by 1.3x to correct
                                 # predicted range so only higher-conviction trades pass.
 MIN_MARGIN_THRESHOLD = 1.00     # Minimum $ past breakeven to accept a trade.
                                 # Filters out marginal signals (e.g., $0.23 margin on SKLZ).
-IV_RANK_MAX = 50                # Only enter when IV rank < 50 (vol is cheap).
+IV_RANK_MAX = 60                # Only enter when IV rank < 60 (vol is cheap).
                                 # If IV is already at the 90th percentile, the premium
                                 # bakes in the expected move — no edge.
 MAX_TOP_PICKS = 2               # Only trade the top N highest-conviction picks.
@@ -59,6 +59,17 @@ REJECT_DAMPENED = True          # Hard-reject tickers where GARCH persistence hi
 REALIZED_VS_PREDICTED_MIN = 0.50  # Reject if 5-day realized vol < 50% of GARCH prediction.
                                   # Catches "ghost signals" where GARCH reads old volatility
                                   # from a past event that already resolved.
+
+# ─── v4 Filters (post-RGTI/SOFI/GME loss analysis) ──────────────────
+VOL_MEAN_REVERSION_MAX = 1.3      # Reject if HV30/HV90 > 1.3 (vol is 30%+ above long-term).
+                                  # When short-term vol is elevated above long-term, vol is
+                                  # likely to compress — buying vol in this regime loses.
+                                  # RGTI: HV30=92.5% vs HV90≈70% → ratio 1.32 → REJECT.
+                                  # SOFI: HV30=61.0% vs HV90≈40% → ratio 1.53 → REJECT.
+MIN_BE_FEASIBILITY = 0.25         # Reject if < 25% of historical N-day windows achieved
+                                  # a move >= breakeven %. Prevents trades requiring moves
+                                  # the stock has rarely sustained.
+                                  # SOFI needed ±12.1% in 16d; only ~10% of windows did → REJECT.
 
 # ─── Autonomous Trader Strict Filters ────────────────────────────
 MIN_PERSISTENCE = 0.70            # Reject if GARCH persistence < 0.70.
@@ -96,9 +107,27 @@ COMMISSION_PER_CONTRACT = 0.65  # Webull commission per options contract
 STRANGLE_OTM_WIDTH = 0.03         # 3% OTM from spot
 STRANGLE_HOLDING_PERIOD_DAYS = 5  # Hold strangle for N trading days
 STRANGLE_ENTRY_VOL_THRESHOLD = 0.03  # Same GARCH signal threshold as straddle
-MAX_STRANGLE_SPREAD_PCT = 0.06    # Max spread between call & put strikes as % of spot
+MAX_STRANGLE_SPREAD_PCT = 0.15    # Max spread between call & put strikes as % of spot
 MIN_EXPIRY_TRADING_DAYS = 14      # Minimum 14 trading days (~20 calendar days) to expiry
                                   # Prevents theta-heavy short-dated positions
+
+# ─── Hybrid Scanner (GARCH + LSTM) Parameters ───────────────────
+# Combines GARCH volatility identification with LSTM directional
+# prediction into a single unified pipeline.
+# GARCH features are embedded directly in the LSTM input vector.
+# Replaces the standalone DMT. AT is NOT modified.
+DMT_BUDGET = 150.0                # Separate budget from AT
+DMT_LSTM_SEQ_LEN = 30             # 30 trading days lookback for LSTM input
+DMT_LSTM_HIDDEN = 64              # LSTM hidden dimension
+DMT_LSTM_LAYERS = 2               # Stacked LSTM layers
+DMT_LSTM_DROPOUT = 0.2            # Dropout within LSTM
+DMT_CONFIDENCE_THRESHOLD = 0.70   # Raised to 70% — only high-conviction signals
+DMT_ENSEMBLE_SIZE = 5             # Number of LSTM models in ensemble (averaged softmax)
+DMT_TP_PCT = 5.0                  # Quick TP on first spike (was 15%)
+DMT_SL_PCT = -50.0                # Wide SL — give trades room to breathe (was -30%)
+DMT_MAX_POSITIONS = 3             # Max concurrent directional positions
+DMT_RETRAIN_DAYS = 7              # Retrain LSTM every 7 days
+DMT_HORIZONS = [1, 5, 10]         # Prediction horizons to test (trading days)
 
 # ─── Auto-Close Rules (ABSOLUTE — applies to ALL positions) ─────────
 # These thresholds are unconditional: close IMMEDIATELY when hit,
